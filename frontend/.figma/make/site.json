@@ -1,0 +1,10 @@
+{
+  "description": "ClinIQ is an AI-driven clinical decision support system designed for healthcare professionals, providing evidence-based recommendations to enhance patient care.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

@@ -1,0 +1,83 @@
+node_modules/
+dist/
+build/
+.cache/
+.env
+.env.*
+!.env.example
+.vite/
+vite.config.*.timestamp-*
+*.tsbuildinfo
+*-debug.log*
+logs/
+*.log
+.claude-replay.*
+.tmp-*
+/.figma/design-context/
+
+# Platform-managed agentplat state, not project source. In the
+# client-initiated single-repo workspace layout (make's `Path: "."` spec) the
+# repo root IS the workspace root, so these land inside this repo rather than
+# beside it.
+/.plugins/
+/.opencode-skills/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Virtual environments
+backend/venv/
+backend/env/
+backend/ENV/
+backend/.venv/
+venv/
+env/
+ENV/
+.venv/
+
+# Backend specific
+backend/.env
+backend/.env.local
+backend/.env.*.local
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+
+# Frontend specific  
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.turbo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+.temp/
+temp/
