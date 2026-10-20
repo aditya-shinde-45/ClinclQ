@@ -1,338 +1,170 @@
-# ClinIQ - Clinical Decision Support System
+# ClinIQ — AI Clinical Decision Support System
 
-A full-stack clinical decision support application with React + TypeScript frontend and FastAPI + Supabase backend.
+ClinIQ is a full-stack clinical decision support (CDS) web application built for healthcare practitioners. It pairs an intuitive React 19 + TypeScript frontend with a high-performance FastAPI backend, powered by **AWS Bedrock (Meta Llama 3 70B Instruct)** for real-time differential diagnoses and **AWS S3** with server-side AES256 encryption for patient document management.
 
-## 🏗️ Project Structure
+---
+
+## 🌟 Key Features
+
+* **AI Clinical Decision Support Engine**: Uses **Meta Llama 3 70B Instruct** on **AWS Bedrock** to synthesize evidence-grounded differential diagnoses, guideline-directed next steps, drug-drug safety screens, and patient-specific risk factor stratification.
+* **Encrypted Medical Document Storage**: Secure document uploading to **AWS S3** (`AES256` server-side encryption) with dynamic, expiring pre-signed URLs (AWS SigV4) for imaging and lab reports.
+* **Patient Context Synthesis**: Seamlessly injects patient history, current medications, vital signs, and attached S3 medical records directly into LLM clinical prompts.
+* **Physician Sign-Off & Governance**: Full audit trail allowing board-certified clinicians to review, approve, modify, or reject AI-generated clinical suggestions.
+* **Role-Based Access Control**: Separate workflows for **Doctors**, **Assistants**, and **Admins** with JWT authentication and bcrypt password hashing.
+* **Zero-Downtime Resilience**: Hybrid database layer supporting live cloud Supabase or autonomous local database fallback with automatic DNS detection.
+
+---
+
+## 🏗️ Architecture & Project Structure
 
 ```
 .
-├── frontend/          # React + Vite + Tailwind CSS frontend
+├── frontend/                     # React 19 + Vite + Tailwind CSS v4
 │   ├── src/
-│   │   ├── App.tsx           # Main application component
-│   │   ├── main.tsx          # React entry point
-│   │   ├── api.ts            # API client functions
-│   │   ├── config.ts         # Configuration and auth helpers
-│   │   └── index.css         # Global styles with Tailwind
+│   │   ├── App.tsx               # Main application component & dashboards
+│   │   ├── api.ts                # REST API client & auth handlers
+│   │   ├── config.ts             # Environment configuration
+│   │   ├── main.tsx              # React entry point
+│   │   └── index.css             # Tailwind v4 design system
 │   ├── index.html
 │   ├── vite.config.ts
 │   └── package.json
 │
-├── backend/           # FastAPI + Supabase backend
+├── backend/                      # FastAPI Python Application
 │   ├── core/
-│   │   ├── config.py         # App configuration
-│   │   ├── database.py       # Supabase client
-│   │   └── security.py       # JWT auth & bcrypt
+│   │   ├── config.py             # Pydantic environment configuration
+│   │   ├── database.py           # Database connection & fallback engine
+│   │   ├── mock_db.py            # Resilient local JSON database
+│   │   └── security.py           # JWT tokens & bcrypt password hashing
 │   ├── models/
-│   │   └── schemas.py        # Pydantic models
+│   │   └── schemas.py            # Pydantic data validation schemas
 │   ├── routers/
-│   │   ├── auth.py           # Authentication endpoints
-│   │   ├── patients.py       # Patient management
-│   │   ├── appointments.py   # Appointment scheduling
-│   │   ├── analyses.py       # Clinical analysis (AI mock)
-│   │   ├── documents.py      # Document upload/retrieval
-│   │   └── admin.py          # Admin operations
+│   │   ├── auth.py               # Authentication & login
+│   │   ├── patients.py           # Patient demographics & timeline
+│   │   ├── appointments.py       # Clinical appointment booking
+│   │   ├── analyses.py           # AWS Bedrock CDS generation & decisions
+│   │   ├── documents.py          # AWS S3 file upload & presigned URLs
+│   │   └── admin.py              # User management & system metrics
 │   ├── services/
-│   │   └── mock_analysis.py  # Mock AI analysis generator
-│   ├── main.py               # FastAPI application
-│   ├── schema.sql            # Database schema
-│   ├── seed_data.sql         # Sample data with Marathi names
-│   └── requirements.txt
+│   │   ├── bedrock_service.py    # AWS Bedrock Converse API (Llama 3 70B)
+│   │   ├── s3_service.py         # AWS S3 AES256 storage & presigned URLs
+│   │   └── mock_analysis.py      # Clinical fallback inference generator
+│   ├── create_user.py            # CLI user generation tool
+│   ├── test_api_aws.py           # End-to-end 8-point API verification suite
+│   ├── test_aws.py               # Direct AWS S3 & Bedrock diagnostic probe
+│   ├── local_db.json             # Seeded clinical database
+│   ├── main.py                   # FastAPI application entry point
+│   └── requirements.txt          # Python dependencies (boto3, fastapi, etc.)
 │
-└── README.md          # This file
+├── start-all.bat                 # One-click launcher for Frontend & Backend
+├── start-backend.bat             # Launcher for FastAPI server (Port 8000)
+├── start-frontend.bat            # Launcher for Vite dev server (Port 5173)
+├── USERS_AND_WORKFLOW.md         # Credentials, user directory & test guide
+└── README.md                     # This file
 ```
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- **Node.js** 18+ and **pnpm** (for frontend)
-- **Python** 3.9+ (for backend)
-- **Supabase account** ([supabase.com](https://supabase.com))
-
-### 1. Set Up Supabase
-
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Go to **SQL Editor** in your Supabase dashboard
-3. Run the schema creation:
-   - Copy contents of `backend/schema.sql`
-   - Execute in SQL Editor
-4. Run the seed data:
-   - Copy contents of `backend/seed_data.sql`
-   - Execute in SQL Editor
-5. Create a storage bucket:
-   - Go to **Storage** in dashboard
-   - Create a new **public bucket** named `patient-documents`
-6. Note your project credentials:
-   - Project URL (e.g., `https://xxx.supabase.co`)
-   - Anon/Public key
-   - Service role key (keep secret!)
-
-### 2. Backend Setup
-
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-# On Linux/Mac:
-source venv/bin/activate
-# On Windows:
-venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Create .env file
-cp .env.example .env
-
-# Edit .env with your Supabase credentials
-# REQUIRED:
-#   SUPABASE_URL=https://your-project.supabase.co
-#   SUPABASE_KEY=your-anon-key
-#   SUPABASE_SERVICE_KEY=your-service-role-key
-#   JWT_SECRET_KEY=your-secret-key-min-32-chars
-
-# Run the backend
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
-
-Backend will be available at **http://localhost:8000**
-
-API docs at **http://localhost:8000/docs**
-
-### 3. Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-pnpm install
-
-# Create .env file
-cp .env.example .env
-
-# Edit .env (default should work):
-# VITE_API_BASE_URL=http://localhost:8000
-
-# Run the frontend
-pnpm dev
-```
-
-Frontend will be available at **http://localhost:8443**
-
-## 🔐 Default Login Credentials
-
-All users have the password: **`clinical-access`**
-
-### Doctor Account
-- **Email:** `maya.patel@northlake.org`
-- **Name:** Dr. Priya Deshmukh
-- **Role:** Doctor (Cardiology)
-
-### Clinical Assistant Account
-- **Email:** `jamie.rivera@northlake.org`
-- **Name:** Aditya Kulkarni
-- **Role:** Assistant (Cardiology)
-
-### Admin Account
-- **Email:** `admin@northlake.org`
-- **Name:** Sneha Patil
-- **Role:** Admin
-
-## 📊 Data Model
-
-### Core Entities
-
-- **Users** - Doctors, assistants, and admins with role-based access
-- **Patients** - Patient demographics and medical history
-- **Appointments** - Scheduling and queue management
-- **Visits** - Timeline of clinical events
-- **Clinical Analyses** - AI-generated diagnostic reports
-- **Diagnoses** - Differential diagnoses with confidence scores
-- **Recommendations** - Clinical next steps
-- **Decisions** - Clinician approval/rejection records
-- **Documents** - Uploaded files (labs, imaging, etc.)
-- **Knowledge Sources** - Clinical guideline databases
-- **Audit Log** - System activity tracking
-
-## 🎯 Key Features
-
-### Clinical Workflow
-1. **Patient Registration** - Assistants register new patients with medical history
-2. **Appointment Management** - Today's queue with status tracking
-3. **Patient Chart** - Complete medical history and timeline
-4. **Clinical Analysis** - Mock AI generates diagnostic recommendations
-5. **Decision Recording** - Doctors approve/modify/reject recommendations
-6. **Document Upload** - Attach labs, imaging, prescriptions to patient records
-
-### Admin Console
-- User management (CRUD, activate/deactivate)
-- System metrics dashboard
-- Knowledge source management
-- Audit log viewing
-
-### Security
-- JWT-based authentication with bcrypt password hashing
-- Role-based access control (RBAC)
-- Protected endpoints with user role verification
-- Secure file storage via Supabase
-
-## 🧪 API Endpoints
-
-### Authentication
-- `POST /auth/login` - Login with email/password
-- `POST /auth/logout` - Logout
-
-### Patients
-- `POST /patients` - Create patient
-- `GET /patients/search?q=<query>` - Search patients
-- `GET /patients/{id}` - Get patient details
-- `PATCH /patients/{id}` - Update patient
-- `GET /patients/{id}/timeline` - Get visit history
-
-### Appointments
-- `GET /appointments/today` - Today's appointments
-- `POST /appointments` - Create appointment
-- `PATCH /appointments/{id}` - Update appointment status
-
-### Clinical Analyses
-- `POST /analyses` - Request AI analysis
-- `GET /analyses/{id}` - Get analysis results
-- `GET /analyses/patient/{id}` - Get patient's analyses
-- `POST /analyses/{id}/decision` - Record clinical decision
-
-### Documents
-- `POST /documents/upload` - Upload document
-- `GET /documents/patient/{id}` - Get patient documents
-- `DELETE /documents/{id}` - Delete document
-
-### Admin
-- `GET /admin/users` - List all users
-- `POST /admin/users` - Create user
-- `PATCH /admin/users/{id}` - Update user
-- `GET /admin/metrics` - System metrics
-- `GET /admin/knowledge-sources` - List knowledge sources
-
-## 🤖 Mock AI Analysis
-
-The backend currently generates **mock clinical analysis data** for testing. When you request an analysis:
-
-1. Analysis status starts as "processing"
-2. Background task simulates 3-second processing delay
-3. Generates random diagnoses, recommendations, and warnings
-4. Status updates to "awaiting_review"
-5. Doctor can then approve/modify/reject
-
-**To integrate real AI later:** Replace `services/mock_analysis.py` with your AI model inference code.
-
-## 🔄 Integrating Frontend with Backend
-
-The frontend includes API client functions in `frontend/src/api.ts`:
-
-```typescript
-import { authAPI, patientsAPI, analysesAPI } from './api';
-
-// Login example
-const { access_token, user } = await authAPI.login(email, password);
-setAuthToken(access_token);
-
-// Search patients
-const results = await patientsAPI.search("Sunita");
-
-// Request analysis
-const analysis = await analysesAPI.request({
-  patient_id: "CLQ-10482",
-  new_symptoms: "...",
-  observations: "..."
-});
-```
-
-Replace hardcoded mock data in `App.tsx` with these API calls for full integration.
-
-## 🌐 Environment Variables
-
-### Backend (`.env`)
-```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-anon-key
-SUPABASE_SERVICE_KEY=your-service-role-key
-JWT_SECRET_KEY=generate-a-secure-random-key-here
-JWT_ALGORITHM=HS256
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES=1440
-ENVIRONMENT=development
-CORS_ORIGINS=["http://localhost:8443","http://localhost:3000"]
-```
-
-### Frontend (`.env`)
-```env
-VITE_API_BASE_URL=http://localhost:8000
-```
-
-## 📦 Deployment
-
-### Backend Deployment
-- Deploy to Railway, Render, or AWS Lambda
-- Set environment variables in hosting platform
-- Ensure Supabase credentials are secure
-- Update CORS_ORIGINS for production domains
-
-### Frontend Deployment
-- Build: `cd frontend && pnpm build`
-- Deploy `dist/` folder to Vercel, Netlify, or Cloudflare Pages
-- Set `VITE_API_BASE_URL` to production backend URL
-
-## 🛠️ Development Notes
-
-### Adding New API Endpoints
-1. Create Pydantic schemas in `backend/models/schemas.py`
-2. Add router in `backend/routers/`
-3. Include router in `backend/main.py`
-4. Update `frontend/src/api.ts` with client functions
-
-### Database Migrations
-- Modify `backend/schema.sql` for schema changes
-- Run updated SQL in Supabase SQL Editor
-- Update Pydantic models to match
-
-### Testing Backend
-- Visit http://localhost:8000/docs for interactive API docs
-- Test endpoints with built-in Swagger UI
-- Use curl or Postman for API testing
-
-## 📝 Sample Data
-
-The seed data includes:
-- 4 patients with Marathi/Maharashtra names (Sunita Jadhav, Ramesh Bhosale, Manjusha Pawar, Anand Kale)
-- 4 appointments for today
-- Sample clinical analysis with diagnoses
-- Knowledge sources (clinical guidelines)
-- Audit log entries
-
-## 🤝 Contributing
-
-This is a prototype clinical decision support system. Key areas for enhancement:
-1. Replace mock AI with real ML models
-2. Add comprehensive error handling
-3. Implement loading states in frontend
-4. Add form validation
-5. Expand test coverage
-6. Add real-time notifications
-7. Implement advanced search and filtering
-
-## 📄 License
-
-[Add your license here]
-
-## 🙋 Support
-
-For questions or issues:
-1. Check API docs at http://localhost:8000/docs
-2. Review Supabase logs in dashboard
-3. Check browser console for frontend errors
-4. Verify environment variables are set correctly
 
 ---
 
-**Built with:** React 19, Vite 8, Tailwind CSS 4, FastAPI, Supabase, PostgreSQL, JWT Auth
+## 🚀 Quick Start
+
+### 1. Prerequisites
+* **Node.js** (v18+) & **npm** or **pnpm**
+* **Python** (3.10+) with `venv`
+
+### 2. Launching the Application
+You can start both servers simultaneously on Windows using the batch script:
+```powershell
+.\start-all.bat
+```
+
+Or run each in its own terminal:
+
+**Terminal 1 (Backend):**
+```powershell
+cd backend
+.\venv\Scripts\activate
+uvicorn main:app --reload --port 8000
+```
+
+**Terminal 2 (Frontend):**
+```powershell
+cd frontend
+npm run dev
+```
+
+* **Frontend UI**: [http://localhost:5173](http://localhost:5173)
+* **Backend API**: [http://localhost:8000](http://localhost:8000)
+* **Interactive API Docs (Swagger)**: [http://localhost:8000/docs](http://localhost:8000/docs)
+* **AWS Status Monitor**: [http://localhost:8000/aws/status](http://localhost:8000/aws/status)
+
+---
+
+## 🔐 Credentials & Testing Workflow
+
+For full credentials, testing scenarios, and sample inputs, see:
+👉 **[USERS_AND_WORKFLOW.md](USERS_AND_WORKFLOW.md)**
+
+### Quick Login Credentials (Password for all: `clinical-access`)
+* **Doctor**: `parth.chavan@cliniq.org`
+* **Assistant**: `jamie.rivera@northlake.org`
+* **Admin**: `admin@northlake.org`
+
+---
+
+## ☁️ AWS Configuration
+
+The backend is configured in `backend/.env` with:
+
+```env
+# AWS Configuration (India - ap-south-1 Mumbai)
+AWS_ACCESS_KEY_ID=your_access_key_id
+AWS_SECRET_ACCESS_KEY=your_secret_access_key
+AWS_REGION=ap-south-1
+AWS_S3_BUCKET_NAME=cliniq-app-storage-2026-unique
+AWS_BEDROCK_MODEL_ID=meta.llama3-70b-instruct-v1:0
+```
+
+### Supported AWS Services:
+1. **Amazon Bedrock**:
+   * Model: `meta.llama3-70b-instruct-v1:0` (Meta Llama 3 70B Instruct)
+   * API: `converse()` operation with structured schema enforcement
+2. **Amazon Simple Storage Service (S3)**:
+   * Bucket: `cliniq-app-storage-2026-unique`
+   * Server-Side Encryption: `AES256`
+   * Access: Secure temporary presigned URLs (`generate_presigned_url`)
+
+---
+
+## 🧪 Automated Testing
+
+### 1. Run the Full 8-Point API & AWS Verification Suite:
+```powershell
+cd backend
+.\venv\Scripts\python.exe test_api_aws.py
+```
+This tests:
+1. Health & AWS infrastructure status (`/health`, `/aws/status`)
+2. Doctor login & JWT token issuance (`/auth/login`)
+3. S3 document upload with AES256 encryption (`/documents/upload`)
+4. Dynamic AWS presigned URL generation (`/documents/patient/{id}`)
+5. Real-time Llama 3 70B Bedrock inference (`/analyses`)
+6. Verification of generated differential diagnoses, recommendations, and drug checks
+7. Clinical decision recording and approval (`/analyses/{id}/decision`)
+8. S3 document deletion and database cleanup (`/documents/{id}`)
+
+### 2. Run Direct AWS Probe Test:
+```powershell
+cd backend
+.\venv\Scripts\python.exe test_aws.py
+```
+
+### 3. Create Custom Test Users:
+```powershell
+cd backend
+.\venv\Scripts\python.exe create_user.py --email "doctor@hospital.org" --name "Dr. Name" --role "doctor" --password "yourpassword"
+```
+
+---
+
+## 📜 License
+Developed for ClinIQ Clinical Decision Support Systems. Internal Clinical Research & Healthcare Use.
