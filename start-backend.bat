@@ -14,8 +14,7 @@ cd backend
 
 REM Check if virtual environment exists
 if not exist "venv" (
-    echo Creating virtual environment...
-    python -m venv venv
+    py -3.12 -m venv venv 2>nul || python -m venv venv
 )
 
 REM Activate virtual environment

@@ -4,10 +4,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "format": "oxfmt"
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview",
+    "format": "npm --prefix frontend run format",
+    "backend": "backend\\venv\\Scripts\\uvicorn main:app --reload --app-dir backend --port 8000"
   },
   "dependencies": {
     "react": "^19.0.0",

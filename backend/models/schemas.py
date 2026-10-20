@@ -262,8 +262,8 @@ class DocumentUploadResponse(BaseModel):
     file_type: str
     category: str
     file_url: str
-    uploaded_at: datetime
-    uploaded_by_id: int
+    uploaded_at: Optional[datetime] = None
+    uploaded_by_id: Optional[int] = None
 
     class Config:
         from_attributes = True

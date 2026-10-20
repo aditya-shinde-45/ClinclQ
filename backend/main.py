@@ -40,10 +40,45 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint with AWS S3 and Bedrock operational status"""
+    from services.s3_service import s3_service
+    from services.bedrock_service import bedrock_service
+    
     return {
         "status": "healthy",
-        "environment": settings.ENVIRONMENT
+        "environment": settings.ENVIRONMENT,
+        "aws": {
+            "region": settings.AWS_REGION,
+            "s3": {
+                "configured": s3_service.is_configured,
+                "bucket": s3_service.bucket
+            },
+            "bedrock": {
+                "configured": bedrock_service.is_configured,
+                "model_id": bedrock_service.model_id
+            }
+        }
+    }
+
+
+@app.get("/aws/status")
+async def aws_status():
+    """Dedicated AWS infrastructure status endpoint"""
+    from services.s3_service import s3_service
+    from services.bedrock_service import bedrock_service
+
+    return {
+        "region": settings.AWS_REGION,
+        "s3": {
+            "status": "operational" if s3_service.is_configured and s3_service.s3_client else "offline",
+            "bucket": s3_service.bucket,
+            "encryption": "AES256"
+        },
+        "bedrock": {
+            "status": "operational" if bedrock_service.is_configured and bedrock_service.bedrock_client else "offline",
+            "model_id": bedrock_service.model_id,
+            "provider": "Meta Llama 3"
+        }
     }
 
 
