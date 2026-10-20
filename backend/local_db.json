@@ -434,7 +434,7 @@
     {
       "patient_id": "CLQ-10491",
       "report_id": "CDS-2026-1131",
-      "status": "awaiting_review",
+      "status": "approve",
       "new_symptoms": "Shortness of breath on exertion for 5 days. Intermittent central chest pressure, resolving with rest.",
       "observations": "Patient alert and oriented. No acute distress at rest. Mild bilateral ankle edema.",
       "test_results": "ECG: normal sinus rhythm, nonspecific ST changes. Troponin pending.",
@@ -443,7 +443,8 @@
       "generated_at": "2026-10-20T13:14:16.717219",
       "id": 8,
       "created_at": "2026-10-20T13:14:16.719363",
-      "updated_at": "2026-10-20T13:14:23.975341"
+      "updated_at": "2026-10-20T13:16:52.363939",
+      "reviewed_at": "2026-10-20T13:16:52.335205"
     }
   ],
   "diagnoses": [
@@ -1228,6 +1229,17 @@
       "id": 4,
       "created_at": "2026-10-20T13:08:16.696613",
       "updated_at": "2026-10-20T13:08:16.696613"
+    },
+    {
+      "analysis_id": 8,
+      "decision_type": "approve",
+      "clinician_notes": "",
+      "attestation_confirmed": true,
+      "decided_by_id": "5",
+      "decided_at": "2026-10-20T13:16:52.335205",
+      "id": 5,
+      "created_at": "2026-10-20T13:16:52.337206",
+      "updated_at": "2026-10-20T13:16:52.337206"
     }
   ],
   "documents": [
