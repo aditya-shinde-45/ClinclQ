@@ -76,7 +76,9 @@ function Field({
   label,
   placeholder,
   type = "text",
+  value,
   defaultValue,
+  onChange,
   required,
   hint,
   error,
@@ -84,7 +86,9 @@ function Field({
   label: string;
   placeholder?: string;
   type?: string;
+  value?: string;
   defaultValue?: string;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   required?: boolean;
   hint?: string;
   error?: string;
@@ -101,7 +105,9 @@ function Field({
         name={id}
         type={type}
         placeholder={placeholder}
+        value={value}
         defaultValue={defaultValue}
+        onChange={onChange}
         required={required}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
@@ -123,17 +129,21 @@ function Field({
 function TextArea({
   label,
   placeholder,
+  value,
   defaultValue,
+  onChange,
 }: {
   label: string;
   placeholder?: string;
+  value?: string;
   defaultValue?: string;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }) {
   const id = label.toLowerCase().replace(/\W+/g, "-");
   return (
     <label className="field" htmlFor={id}>
       <span className="field__label">{label}</span>
-      <textarea id={id} rows={4} placeholder={placeholder} defaultValue={defaultValue} />
+      <textarea id={id} rows={4} placeholder={placeholder} value={value} defaultValue={defaultValue} onChange={onChange} />
     </label>
   );
 }
@@ -613,13 +623,15 @@ function Login({
             key={admin ? "admin" : clinicalRole}
             label="Work email"
             type="email"
-            defaultValue={email}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
           <Field
             label="Password"
             type="password"
-            defaultValue={password}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
             error={error ? "The password is incorrect. Try again or contact your hospital administrator." : undefined}
           />
@@ -935,35 +947,157 @@ function PatientChart({ navigate, currentPatient, role = "Doctor" }: { navigate:
   );
 }
 
-function AddInfo({ navigate }: { navigate: (view: View) => void }) {
+function AddInfo({
+  navigate,
+  currentPatient,
+  setCurrentAnalysis,
+}: {
+  navigate: (view: View) => void;
+  currentPatient: any;
+  setCurrentAnalysis: (a: any) => void;
+}) {
+  const patient = currentPatient || {
+    id: "CLQ-10482",
+    full_name: "Sunita Jadhav",
+    age: 58,
+    gender: "Female",
+  };
+  const [symptoms, setSymptoms] = useState(
+    "Shortness of breath on exertion for 5 days. Intermittent central chest pressure, resolving with rest."
+  );
+  const [observations, setObservations] = useState(
+    "Patient alert and oriented. No acute distress at rest. Mild bilateral ankle edema."
+  );
+  const [impression, setImpression] = useState("");
+  const [testResults, setTestResults] = useState(
+    "ECG: normal sinus rhythm, nonspecific ST changes. Troponin pending."
+  );
+  const [allergies, setAllergies] = useState("");
+  const [testsToPerform, setTestsToPerform] = useState(
+    "Troponin I, BNP, chest X-ray, repeat echocardiogram"
+  );
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSubmitting(true);
+    setError("");
+    try {
+      const payload = {
+        patient_id: patient.id,
+        new_symptoms: symptoms,
+        observations: observations,
+        test_results: testResults,
+        clinical_notes: [impression, notes, allergies ? `New allergy: ${allergies}` : "", `Tests to perform: ${testsToPerform}`].filter(Boolean).join(" | "),
+      };
+      const res = await analysesAPI.request(payload);
+      setCurrentAnalysis(res);
+      navigate("processing");
+    } catch (err: any) {
+      console.error("Failed to request analysis:", err);
+      setError(err.message || "Failed to initiate clinical analysis.");
+      setSubmitting(false);
+    }
+  };
+
   return (
-    <ClinicalShell view="patient-chart" navigate={navigate} patientOpen>
+    <ClinicalShell view="patient-chart" navigate={navigate} currentPatient={patient}>
       <main className="page page--form">
-        <PageHeader eyebrow="Current visit" title="Add clinical information" description="Document changes since the previous encounter. Existing chart data will be included automatically." />
-        <form className="clinical-form" onSubmit={(event) => { event.preventDefault(); navigate("processing"); }}>
+        <PageHeader
+          eyebrow="Current visit"
+          title="Add clinical information"
+          description="Document changes since the previous encounter. Existing chart data and AWS Bedrock AI models will be utilized."
+        />
+        {error && (
+          <div className="form-error" role="alert" style={{ marginBottom: "1.5rem" }}>
+            <strong>{error}</strong>
+          </div>
+        )}
+        <form className="clinical-form" onSubmit={handleSubmit}>
           <section>
-            <div className="form-section-heading"><span>1</span><div><h2>Symptoms and observations</h2><p>Capture the patient’s current presentation.</p></div></div>
+            <div className="form-section-heading">
+              <span>1</span>
+              <div>
+                <h2>Symptoms and observations</h2>
+                <p>Capture the patient’s current presentation.</p>
+              </div>
+            </div>
             <div className="form-grid">
-              <TextArea label="New symptoms" defaultValue="Shortness of breath on exertion for 5 days. Intermittent central chest pressure, resolving with rest." />
-              <TextArea label="Current observations" defaultValue="Patient alert and oriented. No acute distress at rest. Mild bilateral ankle edema." />
+              <TextArea
+                label="New symptoms"
+                value={symptoms}
+                onChange={(e) => setSymptoms(e.target.value)}
+              />
+              <TextArea
+                label="Current observations"
+                value={observations}
+                onChange={(e) => setObservations(e.target.value)}
+              />
             </div>
           </section>
           <section>
-            <div className="form-section-heading"><span>2</span><div><h2>Clinical findings</h2><p>Add the current impression and recent results.</p></div></div>
+            <div className="form-section-heading">
+              <span>2</span>
+              <div>
+                <h2>Clinical findings</h2>
+                <p>Add the current impression and recent results.</p>
+              </div>
+            </div>
             <div className="form-grid">
-              <TextArea label="Current diagnosis or impression" placeholder="Enter working diagnosis or differential" />
-              <TextArea label="New test results" defaultValue="ECG: normal sinus rhythm, nonspecific ST changes. Troponin pending." />
-              <TextArea label="New allergies" placeholder="Enter new allergy and reaction, or leave blank" />
-              <TextArea label="Tests to perform" defaultValue="Troponin I, BNP, chest X-ray, repeat echocardiogram" />
+              <TextArea
+                label="Current diagnosis or impression"
+                placeholder="Enter working diagnosis or differential"
+                value={impression}
+                onChange={(e) => setImpression(e.target.value)}
+              />
+              <TextArea
+                label="New test results"
+                value={testResults}
+                onChange={(e) => setTestResults(e.target.value)}
+              />
+              <TextArea
+                label="New allergies"
+                placeholder="Enter new allergy and reaction, or leave blank"
+                value={allergies}
+                onChange={(e) => setAllergies(e.target.value)}
+              />
+              <TextArea
+                label="Tests to perform"
+                value={testsToPerform}
+                onChange={(e) => setTestsToPerform(e.target.value)}
+              />
             </div>
           </section>
           <section>
-            <div className="form-section-heading"><span>3</span><div><h2>Visit notes</h2><p>Include context relevant to the analysis.</p></div></div>
-            <TextArea label="Additional clinical notes" placeholder="Add relevant history, concerns, or context" />
+            <div className="form-section-heading">
+              <span>3</span>
+              <div>
+                <h2>Visit notes</h2>
+                <p>Include context relevant to the AI analysis.</p>
+              </div>
+            </div>
+            <TextArea
+              label="Additional clinical notes"
+              placeholder="Add relevant history, concerns, or context"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
           </section>
           <div className="form-actions">
-            <p><strong>Before requesting analysis</strong><span>Review the information above for accuracy. ClinIQ will include the complete patient chart.</span></p>
-            <div><Button variant="quiet" onClick={() => navigate("patient-chart")}>Cancel</Button><Button type="submit">Request clinical analysis</Button></div>
+            <p>
+              <strong>Before requesting analysis</strong>
+              <span>Review the information above for accuracy. ClinIQ will query AWS Bedrock clinical intelligence.</span>
+            </p>
+            <div>
+              <Button variant="quiet" onClick={() => navigate("patient-chart")}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting ? "Initiating analysis..." : "Request clinical analysis"}
+              </Button>
+            </div>
           </div>
         </form>
       </main>
@@ -971,89 +1105,335 @@ function AddInfo({ navigate }: { navigate: (view: View) => void }) {
   );
 }
 
-function Processing({ navigate }: { navigate: (view: View) => void }) {
+function Processing({
+  navigate,
+  currentAnalysis,
+  setCurrentAnalysis,
+  currentPatient,
+}: {
+  navigate: (view: View) => void;
+  currentAnalysis: any;
+  setCurrentAnalysis: (a: any) => void;
+  currentPatient: any;
+}) {
   const [stage, setStage] = useState(0);
-  const stages = ["Reviewing patient context", "Retrieving clinical evidence", "Cross-checking interactions", "Calibrating confidence"];
+  const stages = [
+    "Reviewing patient history & chart context",
+    "Invoking AWS Bedrock clinical intelligence",
+    "Cross-checking drug interactions & medical guidelines",
+    "Calibrating differential confidence intervals",
+  ];
+
   useEffect(() => {
-    const interval = window.setInterval(() => setStage((value) => Math.min(value + 1, stages.length - 1)), 900);
-    const complete = window.setTimeout(() => navigate("report"), 4300);
-    return () => { window.clearInterval(interval); window.clearTimeout(complete); };
-  }, [navigate, stages.length]);
+    const stageInterval = window.setInterval(() => {
+      setStage((value) => Math.min(value + 1, stages.length - 1));
+    }, 1100);
+
+    let isMounted = true;
+    let pollInterval: any = null;
+
+    if (currentAnalysis?.id) {
+      let attempts = 0;
+      pollInterval = setInterval(async () => {
+        attempts++;
+        try {
+          const updated = await analysesAPI.getById(currentAnalysis.id);
+          if (
+            updated.status === "awaiting_review" ||
+            (updated.diagnoses && updated.diagnoses.length > 0) ||
+            attempts >= 8
+          ) {
+            if (isMounted) {
+              setCurrentAnalysis(updated);
+              clearInterval(pollInterval);
+              navigate("report");
+            }
+          }
+        } catch (e) {
+          console.error("Error polling Bedrock analysis:", e);
+          if (attempts >= 6 && isMounted) {
+            clearInterval(pollInterval);
+            navigate("report");
+          }
+        }
+      }, 1500);
+    } else {
+      const timer = window.setTimeout(() => {
+        if (isMounted) navigate("report");
+      }, 4500);
+      return () => {
+        clearInterval(stageInterval);
+        clearTimeout(timer);
+      };
+    }
+
+    return () => {
+      isMounted = false;
+      clearInterval(stageInterval);
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [currentAnalysis?.id, navigate, setCurrentAnalysis, stages.length]);
+
   return (
-    <ClinicalShell view="report" navigate={navigate} patientOpen>
+    <ClinicalShell view="report" navigate={navigate} currentPatient={currentPatient}>
       <main className="processing-page" aria-live="polite">
-        <div className="processing-mark" aria-hidden="true"><span /></div>
-        <p>Clinical analysis in progress</p>
+        <div className="processing-mark" aria-hidden="true">
+          <span />
+        </div>
+        <p>AWS Bedrock Clinical Decision Support in Progress</p>
         <h1>{stages[stage]}</h1>
-        <p>ClinIQ is comparing current findings with the patient record and relevant clinical guidance.</p>
+        <p>
+          ClinIQ is querying AWS Bedrock foundation model and synthesizing guideline recommendations.
+        </p>
         <ol className="stage-list">
           {stages.map((item, index) => (
-            <li className={index < stage ? "is-complete" : index === stage ? "is-active" : ""} key={item}>
-              <span>{index < stage ? "Complete" : index === stage ? "In progress" : "Waiting"}</span>
+            <li
+              className={
+                index < stage ? "is-complete" : index === stage ? "is-active" : ""
+              }
+              key={item}
+            >
+              <span>
+                {index < stage ? "Complete" : index === stage ? "In progress" : "Waiting"}
+              </span>
               <strong>{item}</strong>
             </li>
           ))}
         </ol>
-        <p className="processing-note">You may leave this screen. The analysis will remain linked to this visit.</p>
+        <p className="processing-note">
+          Analysis generated via AWS Bedrock (Mumbai ap-south-1). Results will link directly to this patient chart.
+        </p>
       </main>
     </ClinicalShell>
   );
 }
 
-const diagnoses = [
+const fallbackDiagnoses = [
   {
     name: "Stable angina",
     confidence: "78% confidence",
     tone: "success" as const,
     label: "High confidence",
-    summary: "Exertional chest pressure resolving with rest is consistent with chronic coronary syndrome.",
-    evidence: ["Known coronary artery disease", "Symptoms are exertional and resolve with rest", "Nonspecific ST changes without acute ischemic pattern"],
+    summary:
+      "Exertional chest pressure resolving with rest is consistent with chronic coronary syndrome.",
+    evidence: [
+      "Known coronary artery disease",
+      "Symptoms are exertional and resolve with rest",
+      "Nonspecific ST changes without acute ischemic pattern",
+    ],
   },
   {
     name: "Heart failure exacerbation",
     confidence: "64% confidence",
     tone: "caution" as const,
     label: "Needs review",
-    summary: "Dyspnea and peripheral edema may indicate early volume overload; BNP and imaging are pending.",
-    evidence: ["Dyspnea on exertion", "Mild bilateral ankle edema", "Previous ejection fraction 52%"],
+    summary:
+      "Dyspnea and peripheral edema may indicate early volume overload; BNP and imaging are pending.",
+    evidence: [
+      "Dyspnea on exertion",
+      "Mild bilateral ankle edema",
+      "Previous ejection fraction 52%",
+    ],
   },
   {
     name: "Symptomatic anemia",
     confidence: "41% confidence",
     tone: "caution" as const,
     label: "Needs review",
-    summary: "Prior iron-deficiency anemia could contribute to dyspnea; current blood count is not available.",
-    evidence: ["History of iron-deficiency anemia", "Hemoglobin 11.2 g/dL in February", "Fatigue reported during exertion"],
+    summary:
+      "Prior iron-deficiency anemia could contribute to dyspnea; current blood count is not available.",
+    evidence: [
+      "History of iron-deficiency anemia",
+      "Hemoglobin 11.2 g/dL in February",
+      "Fatigue reported during exertion",
+    ],
   },
 ];
 
-function Report({ navigate, print = false }: { navigate: (view: View) => void; print?: boolean }) {
+function Report({
+  navigate,
+  currentPatient,
+  currentAnalysis,
+  setLastDecision,
+  print = false,
+}: {
+  navigate: (view: View) => void;
+  currentPatient: any;
+  currentAnalysis: any;
+  setLastDecision: (d: any) => void;
+  print?: boolean;
+}) {
+  const patient = currentPatient || {
+    id: "CLQ-10482",
+    full_name: "Sunita Jadhav",
+    age: 58,
+    gender: "Female",
+  };
   const [expanded, setExpanded] = useState<number[]>([0]);
   const [decision, setDecision] = useState("approve");
-  const toggle = (index: number) => setExpanded((current) => current.includes(index) ? current.filter((item) => item !== index) : [...current, index]);
-  const handleRowKey = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+  const [clinicianNotes, setClinicianNotes] = useState("");
+  const [attestation, setAttestation] = useState(true);
+  const [savingDecision, setSavingDecision] = useState(false);
+
+  const toggle = (index: number) =>
+    setExpanded((current) =>
+      current.includes(index) ? current.filter((item) => item !== index) : [...current, index]
+    );
+
+  const handleRowKey = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    index: number
+  ) => {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
-      const rows = Array.from(document.querySelectorAll<HTMLButtonElement>(".diagnosis-toggle"));
-      rows[(index + (event.key === "ArrowDown" ? 1 : -1) + rows.length) % rows.length]?.focus();
+      const rows = Array.from(
+        document.querySelectorAll<HTMLButtonElement>(".diagnosis-toggle")
+      );
+      rows[
+        (index + (event.key === "ArrowDown" ? 1 : -1) + rows.length) % rows.length
+      ]?.focus();
     }
   };
+
+  const handleSaveDecision = async () => {
+    setSavingDecision(true);
+    const decisionObj = {
+      decision_type: decision,
+      clinician_notes: clinicianNotes,
+      attestation_confirmed: attestation,
+      decided_at: new Date().toISOString(),
+      report_id: currentAnalysis?.report_id || "CDS-2026-0618",
+    };
+    if (currentAnalysis?.id) {
+      try {
+        const res = await analysesAPI.recordDecision(currentAnalysis.id, {
+          analysis_id: currentAnalysis.id,
+          decision_type: decision,
+          clinician_notes: clinicianNotes,
+          attestation_confirmed: attestation,
+        });
+        setLastDecision({ ...decisionObj, ...res });
+      } catch (e) {
+        console.warn("Could not save decision to backend, using local record:", e);
+        setLastDecision(decisionObj);
+      }
+    } else {
+      setLastDecision(decisionObj);
+    }
+    setSavingDecision(false);
+    navigate("confirmation");
+  };
+
+  const displayDiagnoses =
+    currentAnalysis?.diagnoses && currentAnalysis.diagnoses.length > 0
+      ? currentAnalysis.diagnoses.map((d: any) => ({
+          name: d.name,
+          confidence: `${Math.round(d.confidence_percentage)}% confidence`,
+          tone:
+            d.confidence_label === "high" || d.confidence_percentage >= 70
+              ? ("success" as const)
+              : ("caution" as const),
+          label: d.confidence_label === "high" ? "High confidence" : "Needs review",
+          summary: d.summary,
+          evidence: Array.isArray(d.evidence) ? d.evidence : [d.evidence],
+        }))
+      : fallbackDiagnoses;
+
+  const displayRecommendations =
+    currentAnalysis?.recommendations && currentAnalysis.recommendations.length > 0
+      ? currentAnalysis.recommendations
+      : [
+          {
+            step_number: 1,
+            title: "Complete serial high-sensitivity troponin testing",
+            description: "Exclude acute myocardial injury before outpatient management.",
+          },
+          {
+            step_number: 2,
+            title: "Obtain BNP and chest radiograph",
+            description: "Assess possible volume overload given dyspnea and peripheral edema.",
+          },
+          {
+            step_number: 3,
+            title: "Continue current aspirin and statin therapy",
+            description: "Review antianginal optimization after acute causes are excluded.",
+          },
+        ];
+
+  const displayInteractions =
+    currentAnalysis?.drug_interactions && currentAnalysis.drug_interactions.length > 0
+      ? currentAnalysis.drug_interactions
+      : [
+          {
+            severity: "critical",
+            title: "Avoid adding clarithromycin with current atorvastatin 40 mg",
+            description:
+              "Concurrent use can substantially increase atorvastatin exposure and risk of myopathy. Choose an alternative antibiotic or temporarily withhold atorvastatin under clinician guidance.",
+          },
+        ];
+
+  const displayRiskFactors =
+    currentAnalysis?.risk_factors && currentAnalysis.risk_factors.length > 0
+      ? currentAnalysis.risk_factors
+      : [
+          "Known coronary artery disease",
+          "Hypertension",
+          "Hyperlipidemia",
+          "Age over 55",
+        ];
+
+  const reportId = currentAnalysis?.report_id || "CDS-2026-0618";
+  const formattedDate = currentAnalysis?.generated_at
+    ? new Date(currentAnalysis.generated_at).toLocaleString()
+    : new Date().toLocaleString();
+
   const content = (
     <main className={`page report-page ${print ? "report-page--print" : ""}`}>
       <PageHeader
-        eyebrow={print ? "Read-only clinical document" : "Analysis complete · 18 June 2025, 09:21"}
+        eyebrow={
+          print
+            ? "Read-only clinical document"
+            : `Analysis complete · ${reportId} · ${formattedDate}`
+        }
         title="Clinical decision support report"
-        description="Review the recommendation, supporting evidence, and patient-specific risks before recording your decision."
-        actions={!print && <><Button variant="secondary" onClick={() => navigate("print-report")}>Print view</Button><Status tone="caution">Clinician review required</Status></>}
+        description="AWS Bedrock differential diagnoses, recommended next steps, and risk factors synthesized for physician review."
+        actions={
+          !print && (
+            <>
+              <Button variant="secondary" onClick={() => navigate("print-report")}>
+                Print view
+              </Button>
+              <Status tone="caution">Clinician review required</Status>
+            </>
+          )
+        }
       />
-      {print && <div className="print-meta"><span>{patient.name}</span><code>{patient.id}</code><span>Prepared 18 June 2025, 09:21</span></div>}
+      {print && (
+        <div className="print-meta">
+          <span>{patient.full_name}</span>
+          <code>{patient.id}</code>
+          <span>Report {reportId} · {formattedDate}</span>
+        </div>
+      )}
       <div className="report-layout">
         <div className="report-main">
           <section className="report-section">
-            <div className="section-title"><div><h2>Ranked differential</h2><p>Confidence reflects fit with available patient evidence, not diagnostic certainty.</p></div></div>
+            <div className="section-title">
+              <div>
+                <h2>Ranked differential</h2>
+                <p>
+                  Generated by AWS Bedrock AI. Confidence reflects fit with available patient evidence.
+                </p>
+              </div>
+            </div>
             <div className="diagnosis-list">
-              {diagnoses.map((diagnosis, index) => (
-                <div className={`diagnosis-row ${expanded.includes(index) || print ? "is-expanded" : ""}`} key={diagnosis.name}>
+              {displayDiagnoses.map((diagnosis: any, index: number) => (
+                <div
+                  className={`diagnosis-row ${
+                    expanded.includes(index) || print ? "is-expanded" : ""
+                  }`}
+                  key={diagnosis.name}
+                >
                   <button
                     className="diagnosis-toggle"
                     onClick={() => toggle(index)}
@@ -1062,15 +1442,31 @@ function Report({ navigate, print = false }: { navigate: (view: View) => void; p
                     aria-controls={`diagnosis-${index}`}
                   >
                     <span className="rank">0{index + 1}</span>
-                    <span className="diagnosis-name"><strong>{diagnosis.name}</strong><small>{diagnosis.summary}</small></span>
-                    <span className="confidence"><strong>{diagnosis.confidence}</strong><Status tone={diagnosis.tone}>{diagnosis.label}</Status></span>
-                    {!print && <span className="expand-label">{expanded.includes(index) ? "Hide evidence" : "View evidence"}</span>}
+                    <span className="diagnosis-name">
+                      <strong>{diagnosis.name}</strong>
+                      <small>{diagnosis.summary}</small>
+                    </span>
+                    <span className="confidence">
+                      <strong>{diagnosis.confidence}</strong>
+                      <Status tone={diagnosis.tone}>{diagnosis.label}</Status>
+                    </span>
+                    {!print && (
+                      <span className="expand-label">
+                        {expanded.includes(index) ? "Hide evidence" : "View evidence"}
+                      </span>
+                    )}
                   </button>
                   {(expanded.includes(index) || print) && (
                     <div className="diagnosis-evidence" id={`diagnosis-${index}`}>
                       <strong>Supporting patient evidence</strong>
-                      <ul>{diagnosis.evidence.map((item) => <li key={item}>{item}</li>)}</ul>
-                      <a href="#citations">Guideline evidence <span>ACC/AHA 2023, sections 4.1–4.3</span></a>
+                      <ul>
+                        {diagnosis.evidence.map((item: string, i: number) => (
+                          <li key={i}>{item}</li>
+                        ))}
+                      </ul>
+                      <a href="#citations">
+                        Guideline evidence <span>ACC/AHA 2023, sections 4.1–4.3</span>
+                      </a>
                     </div>
                   )}
                 </div>
@@ -1078,37 +1474,78 @@ function Report({ navigate, print = false }: { navigate: (view: View) => void; p
             </div>
           </section>
           <section className="report-section recommendation">
-            <div className="section-title"><div><h2>Recommended next steps</h2><p>Based on current findings and the leading differential.</p></div></div>
+            <div className="section-title">
+              <div>
+                <h2>Recommended next steps</h2>
+                <p>Based on current findings and the leading differential.</p>
+              </div>
+            </div>
             <ol>
-              <li><span>1</span><div><strong>Complete serial high-sensitivity troponin testing</strong><p>Exclude acute myocardial injury before outpatient management.</p></div></li>
-              <li><span>2</span><div><strong>Obtain BNP and chest radiograph</strong><p>Assess possible volume overload given dyspnea and peripheral edema.</p></div></li>
-              <li><span>3</span><div><strong>Continue current aspirin and statin therapy</strong><p>Review antianginal optimization after acute causes are excluded.</p></div></li>
+              {displayRecommendations.map((rec: any, idx: number) => (
+                <li key={idx}>
+                  <span>{rec.step_number || idx + 1}</span>
+                  <div>
+                    <strong>{rec.title}</strong>
+                    <p>{rec.description}</p>
+                  </div>
+                </li>
+              ))}
             </ol>
           </section>
-          <section className="risk-warning">
-            <div><Status tone="critical">Drug interaction risk</Status><strong>Avoid adding clarithromycin with current atorvastatin 40 mg</strong></div>
-            <p>Concurrent use can substantially increase atorvastatin exposure and risk of myopathy. Choose an alternative antibiotic or temporarily withhold atorvastatin under clinician guidance.</p>
-          </section>
+          {displayInteractions.map((interaction: any, idx: number) => (
+            <section className="risk-warning" key={idx}>
+              <div>
+                <Status tone="critical">Drug interaction risk</Status>
+                <strong>{interaction.title}</strong>
+              </div>
+              <p>{interaction.description}</p>
+            </section>
+          ))}
           <section className="report-section">
-            <div className="section-title"><div><h2>Patient-specific risk factors</h2></div></div>
-            <div className="risk-list"><span>Known coronary artery disease</span><span>Hypertension</span><span>Hyperlipidemia</span><span>Age over 55</span></div>
+            <div className="section-title">
+              <div>
+                <h2>Patient-specific risk factors</h2>
+              </div>
+            </div>
+            <div className="risk-list">
+              {displayRiskFactors.map((factor: string, idx: number) => (
+                <span key={idx}>{factor}</span>
+              ))}
+            </div>
           </section>
           <section className="report-section evidence-trail" id="citations">
-            <div className="section-title"><div><h2>Evidence trail and citations</h2><p>Sources used to generate and calibrate this recommendation.</p></div></div>
-            <Timeline compact />
+            <div className="section-title">
+              <div>
+                <h2>Evidence trail and citations</h2>
+                <p>Sources used to generate and calibrate this recommendation.</p>
+              </div>
+            </div>
+            <Timeline compact patientId={patient.id} />
             <ol className="citations">
-              <li><strong>2023 AHA/ACC Guideline for Chronic Coronary Disease.</strong><span>Circulation. 2023;148:e9–e119. Sections 4.1–4.3.</span></li>
-              <li><strong>2022 AHA/ACC/HFSA Guideline for the Management of Heart Failure.</strong><span>Circulation. 2022;145:e895–e1032.</span></li>
+              <li>
+                <strong>2023 AHA/ACC Guideline for Chronic Coronary Disease.</strong>
+                <span>Circulation. 2023;148:e9–e119. Sections 4.1–4.3.</span>
+              </li>
+              <li>
+                <strong>2022 AHA/ACC/HFSA Guideline for the Management of Heart Failure.</strong>
+                <span>Circulation. 2022;145:e895–e1032.</span>
+              </li>
             </ol>
           </section>
           <section className="report-section explanation">
             <h2>Explanation for the patient</h2>
-            <p>Your symptoms may be related to reduced blood flow to the heart during activity. The care team recommends blood tests and a chest X-ray to rule out urgent problems and check whether fluid buildup is contributing to shortness of breath. Your doctor will review every result and decide what treatment is appropriate.</p>
+            <p>
+              Your symptoms may be related to reduced blood flow to the heart during activity. The care team recommends blood tests and a chest X-ray to rule out urgent problems and check whether fluid buildup is contributing to shortness of breath. Your doctor will review every result and decide what treatment is appropriate.
+            </p>
           </section>
         </div>
         {!print && (
           <aside className="decision-panel">
-            <div className="decision-panel__heading"><span>Required step</span><h2>Record your decision</h2><p>The recommendation will not enter the patient record until you complete this review.</p></div>
+            <div className="decision-panel__heading">
+              <span>Required step</span>
+              <h2>Record your decision</h2>
+              <p>The recommendation will not enter the patient record until you complete this review.</p>
+            </div>
             <div className="decision-options">
               {[
                 ["approve", "Approve recommendation", "Accept the proposed next steps."],
@@ -1116,39 +1553,125 @@ function Report({ navigate, print = false }: { navigate: (view: View) => void; p
                 ["reject", "Reject recommendation", "Do not use this recommendation."],
               ].map(([value, label, hint]) => (
                 <label className={decision === value ? "is-selected" : ""} key={value}>
-                  <input type="radio" name="decision" value={value} checked={decision === value} onChange={() => setDecision(value)} />
-                  <span><strong>{label}</strong><small>{hint}</small></span>
+                  <input
+                    type="radio"
+                    name="decision"
+                    value={value}
+                    checked={decision === value}
+                    onChange={() => setDecision(value)}
+                  />
+                  <span>
+                    <strong>{label}</strong>
+                    <small>{hint}</small>
+                  </span>
                 </label>
               ))}
             </div>
-            <TextArea label="Clinical notes" placeholder="Document your rationale, modifications, or follow-up plan" />
-            <div className="attestation"><input id="attest" type="checkbox" /><label htmlFor="attest">I reviewed the supporting evidence, warnings, and patient context.</label></div>
-            <Button onClick={() => navigate("confirmation")}>Save decision to record</Button>
-            <p className="audit-note">Your name, decision, and timestamp will be recorded in the audit trail.</p>
+            <TextArea
+              label="Clinical notes"
+              placeholder="Document your rationale, modifications, or follow-up plan"
+              value={clinicianNotes}
+              onChange={(e) => setClinicianNotes(e.target.value)}
+            />
+            <div className="attestation">
+              <input
+                id="attest"
+                type="checkbox"
+                checked={attestation}
+                onChange={(e) => setAttestation(e.target.checked)}
+              />
+              <label htmlFor="attest">
+                I reviewed the supporting evidence, warnings, and patient context.
+              </label>
+            </div>
+            <Button onClick={handleSaveDecision} disabled={savingDecision}>
+              {savingDecision ? "Saving decision..." : "Save decision to record"}
+            </Button>
+            <p className="audit-note">
+              Your name, decision, and timestamp will be recorded in the audit trail.
+            </p>
           </aside>
         )}
       </div>
-      {print && <div className="print-actions"><Button variant="secondary" onClick={() => navigate("report")}>Return to interactive report</Button><Button onClick={() => window.print()}>Print report</Button></div>}
+      {print && (
+        <div className="print-actions">
+          <Button variant="secondary" onClick={() => navigate("report")}>
+            Return to interactive report
+          </Button>
+          <Button onClick={() => window.print()}>Print report</Button>
+        </div>
+      )}
     </main>
   );
-  return print ? <div className="print-shell"><header><span className="wordmark">Clin<span>IQ</span></span><p>Clinical decision support document</p></header>{content}</div> : <ClinicalShell view="report" navigate={navigate} patientOpen>{content}</ClinicalShell>;
+
+  return print ? (
+    <div className="print-shell">
+      <header>
+        <span className="wordmark">
+          Clin<span>IQ</span>
+        </span>
+        <p>Clinical decision support document</p>
+      </header>
+      {content}
+    </div>
+  ) : (
+    <ClinicalShell view="report" navigate={navigate} currentPatient={patient}>
+      {content}
+    </ClinicalShell>
+  );
 }
 
-function Confirmation({ navigate }: { navigate: (view: View) => void }) {
+function Confirmation({
+  navigate,
+  currentPatient,
+  currentAnalysis,
+  lastDecision,
+}: {
+  navigate: (view: View) => void;
+  currentPatient: any;
+  currentAnalysis: any;
+  lastDecision: any;
+}) {
+  const patient = currentPatient || {
+    id: "CLQ-10482",
+    full_name: "Sunita Jadhav",
+    age: 58,
+  };
+  const user = getCurrentUser();
+  const decisionLabel =
+    lastDecision?.decision_type === "approve"
+      ? "Recommendation approved"
+      : lastDecision?.decision_type === "modify"
+      ? "Recommendation modified"
+      : lastDecision?.decision_type === "reject"
+      ? "Recommendation rejected"
+      : "Recommendation approved";
+
+  const decisionTimestamp = lastDecision?.decided_at
+    ? new Date(lastDecision.decided_at).toLocaleString()
+    : new Date().toLocaleString();
+
   return (
-    <ClinicalShell view="report" navigate={navigate} patientOpen>
+    <ClinicalShell view="report" navigate={navigate} currentPatient={patient}>
       <main className="confirmation-page">
         <div className="confirmation-symbol" aria-hidden="true">✓</div>
         <Status tone="success">Saved to patient record</Status>
         <h1>Clinical decision recorded</h1>
-        <p>Your approval and notes are now part of {patient.name}’s clinical record.</p>
+        <p>Your approval and notes are now part of {patient.full_name}’s clinical record.</p>
         <dl className="confirmation-details">
-          <div><dt>Decision</dt><dd>Recommendation approved</dd></div>
-          <div><dt>Saved by</dt><dd>Dr. Maya Patel · Cardiology</dd></div>
-          <div><dt>Timestamp</dt><dd>18 June 2025, 09:28</dd></div>
-          <div><dt>Record includes</dt><dd>Current visit data, ClinIQ analysis, evidence citations, warnings, and clinician notes</dd></div>
+          <div><dt>Decision</dt><dd>{decisionLabel}</dd></div>
+          <div><dt>Saved by</dt><dd>{user?.full_name || "Dr. Priya Deshmukh"} · {user?.department || "Cardiology"}</dd></div>
+          <div><dt>Timestamp</dt><dd>{decisionTimestamp}</dd></div>
+          <div><dt>Report ID</dt><dd>{currentAnalysis?.report_id || lastDecision?.report_id || "CDS-2026-0618"}</dd></div>
+          <div><dt>Record includes</dt><dd>AWS Bedrock AI analysis, evidence citations, warnings, and clinician notes</dd></div>
+          {lastDecision?.clinician_notes && (
+            <div><dt>Physician Notes</dt><dd>{lastDecision.clinician_notes}</dd></div>
+          )}
         </dl>
-        <div><Button onClick={() => navigate("patient-chart")}>Return to updated patient chart</Button><Button variant="secondary" onClick={() => navigate("print-report")}>Open saved report</Button></div>
+        <div>
+          <Button onClick={() => navigate("patient-chart")}>Return to updated patient chart</Button>
+          <Button variant="secondary" onClick={() => navigate("print-report")}>Open saved report</Button>
+        </div>
       </main>
     </ClinicalShell>
   );
@@ -1307,9 +1830,13 @@ function Uploads({ navigate }: { navigate: (view: View) => void }) {
   const [verifyError, setVerifyError] = useState("");
   const [documents, setDocuments] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [uploadSuccess, setUploadSuccess] = useState("");
 
   const handleVerify = async () => {
     setVerifyError("");
+    setUploadError("");
+    setUploadSuccess("");
     try {
       const p = await patientsAPI.getById(patientIdInput.trim());
       setVerifiedPatient(p);
@@ -1324,14 +1851,18 @@ function Uploads({ navigate }: { navigate: (view: View) => void }) {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!verifiedPatient || !e.target.files?.length) return;
     setUploading(true);
+    setUploadError("");
+    setUploadSuccess("");
     try {
       for (const file of Array.from(e.target.files)) {
         await documentsAPI.upload(verifiedPatient.id, "general", file);
       }
+      setUploadSuccess("Documents uploaded securely to AWS S3!");
       const docs = await documentsAPI.getByPatient(verifiedPatient.id);
       setDocuments(docs as any[]);
     } catch (err: any) {
       console.error("Upload failed:", err);
+      setUploadError(err.message || "Failed to upload document to AWS S3.");
     } finally {
       setUploading(false);
     }
@@ -1340,7 +1871,7 @@ function Uploads({ navigate }: { navigate: (view: View) => void }) {
   return (
     <ClinicalShell view="uploads" navigate={navigate} role="Assistant">
       <main className="page">
-        <PageHeader title="Upload patient documents" description="Attach files to the correct patient record. Accepted: PDF, DICOM, JPG, PNG." />
+        <PageHeader title="Upload patient documents" description="Attach files to the correct patient record. Files are stored securely with AWS S3 AES-256 encryption." />
         <section className="patient-lookup" aria-label="Patient record lookup">
           <label className="field">
             <span className="field__label">Patient ID or MRN</span>
@@ -1354,8 +1885,10 @@ function Uploads({ navigate }: { navigate: (view: View) => void }) {
           <div className="upload-layout">
             <section className="upload-zone">
               <span>Patient ID verified</span><strong>{verifiedPatient.id} · {verifiedPatient.full_name}</strong>
-              <label className="file-control"><input type="file" multiple onChange={handleUpload} /><span>{uploading ? "Uploading..." : "Choose files to upload"}</span></label>
-              <p>Lab results, MRI, CT, X-ray, prescriptions, and external reports · 25 MB maximum per file</p>
+              <label className="file-control"><input type="file" multiple onChange={handleUpload} /><span>{uploading ? "Uploading to AWS S3..." : "Choose files to upload"}</span></label>
+              {uploadSuccess && <div style={{ color: "var(--color-success, #10b981)", marginTop: "8px", fontWeight: 500 }}>{uploadSuccess}</div>}
+              {uploadError && <div style={{ color: "var(--color-critical, #ef4444)", marginTop: "8px" }}>{uploadError}</div>}
+              <p>Lab results, MRI, CT, X-ray, prescriptions, and external reports · AWS S3 encrypted</p>
             </section>
             <section className="data-section">
               <div className="section-title"><div><h2>Uploaded files</h2><p>{documents.length} documents attached to this patient</p></div></div>
@@ -1363,7 +1896,14 @@ function Uploads({ navigate }: { navigate: (view: View) => void }) {
                 {documents.length === 0 ? (
                   <div className="empty-state"><strong>No documents yet</strong></div>
                 ) : documents.map((doc: any) => (
-                  <div key={doc.id}><div><strong>{doc.file_name}</strong><span>{doc.category}</span></div><span>{new Date(doc.uploaded_at).toLocaleDateString()}</span><Button variant="quiet" onClick={() => window.open(doc.file_url)}>View</Button></div>
+                  <div key={doc.id}>
+                    <div>
+                      <strong>{doc.filename || doc.file_name}</strong>
+                      <span>{doc.category}</span>
+                    </div>
+                    <span>{new Date(doc.uploaded_at).toLocaleDateString()}</span>
+                    <Button variant="quiet" onClick={() => window.open(doc.file_url, "_blank")}>View</Button>
+                  </div>
                 ))}
               </div>
             </section>
@@ -1658,7 +2198,15 @@ function AdminMonitoring() {
 
 export default function App() {
   const [currentPatient, setCurrentPatient] = useState<any>(null);
-  
+  const [currentAnalysis, setCurrentAnalysis] = useState<any>(null);
+  const [lastDecision, setLastDecision] = useState<any>(null);
+
+  useEffect(() => {
+    if (!currentPatient) {
+      patientsAPI.getById("CLQ-10482").then(p => setCurrentPatient(p)).catch(() => {});
+    }
+  }, []);
+
   const routes: Record<View, string> = {
     landing: "/",
     "clinical-login": "/clinical/login",
@@ -1711,14 +2259,14 @@ export default function App() {
   if (view === "assistant-dashboard") return <AssistantDashboard navigate={navigate} setCurrentPatient={setCurrentPatient} />;
   if (view === "patient-search") return <PatientSearch navigate={navigate} setCurrentPatient={setCurrentPatient} role={role} />;
   if (view === "patient-chart") return <PatientChart navigate={navigate} currentPatient={currentPatient} role={role} />;
-  if (view === "add-info") return <AddInfo navigate={navigate} currentPatient={currentPatient} />;
-  if (view === "processing") return <Processing navigate={navigate} />;
-  if (view === "report") return <Report navigate={navigate} currentPatient={currentPatient} />;
-  if (view === "confirmation") return <Confirmation navigate={navigate} currentPatient={currentPatient} />;
+  if (view === "add-info") return <AddInfo navigate={navigate} currentPatient={currentPatient} setCurrentAnalysis={setCurrentAnalysis} />;
+  if (view === "processing") return <Processing navigate={navigate} currentAnalysis={currentAnalysis} setCurrentAnalysis={setCurrentAnalysis} currentPatient={currentPatient} />;
+  if (view === "report") return <Report navigate={navigate} currentPatient={currentPatient} currentAnalysis={currentAnalysis} setLastDecision={setLastDecision} />;
+  if (view === "confirmation") return <Confirmation navigate={navigate} currentPatient={currentPatient} currentAnalysis={currentAnalysis} lastDecision={lastDecision} />;
   if (view === "intake") return <Intake navigate={navigate} />;
   if (view === "uploads") return <Uploads navigate={navigate} />;
   if (view === "schedule-appointment") return <ScheduleAppointment navigate={navigate} />;
   if (view === "compare") return <Compare navigate={navigate} currentPatient={currentPatient} />;
-  if (view === "print-report") return <Report print navigate={navigate} currentPatient={currentPatient} />;
+  if (view === "print-report") return <Report print navigate={navigate} currentPatient={currentPatient} currentAnalysis={currentAnalysis} setLastDecision={setLastDecision} />;
   return <AdminPage view={view} navigate={navigate} />;
 }

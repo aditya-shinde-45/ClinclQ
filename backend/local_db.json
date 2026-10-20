@@ -1,0 +1,1270 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "email": "maya.patel@northlake.org",
+      "password_hash": "$2b$12$vwmCraVTeL8Tzlj/bd.c5eyrDPVacMh8cFLpUNdidl/sCpjgjv0NS",
+      "full_name": "Dr. Priya Deshmukh",
+      "role": "doctor",
+      "department": "Cardiology",
+      "status": "active",
+      "created_at": "2026-10-19T00:43:13.057587",
+      "updated_at": "2026-10-19T00:43:13.057587"
+    },
+    {
+      "id": 2,
+      "email": "jamie.rivera@northlake.org",
+      "password_hash": "$2b$12$vwmCraVTeL8Tzlj/bd.c5eyrDPVacMh8cFLpUNdidl/sCpjgjv0NS",
+      "full_name": "Aditya Kulkarni",
+      "role": "assistant",
+      "department": "Cardiology",
+      "status": "active",
+      "created_at": "2026-10-19T00:43:13.057587",
+      "updated_at": "2026-10-19T00:43:13.057587"
+    },
+    {
+      "id": 3,
+      "email": "jon.bell@northlake.org",
+      "password_hash": "$2b$12$vwmCraVTeL8Tzlj/bd.c5eyrDPVacMh8cFLpUNdidl/sCpjgjv0NS",
+      "full_name": "Dr. Rajesh Joshi",
+      "role": "doctor",
+      "department": "Internal Medicine",
+      "status": "active",
+      "created_at": "2026-10-19T00:43:13.057587",
+      "updated_at": "2026-10-19T00:43:13.057587"
+    },
+    {
+      "id": 4,
+      "email": "admin@northlake.org",
+      "password_hash": "$2b$12$vwmCraVTeL8Tzlj/bd.c5eyrDPVacMh8cFLpUNdidl/sCpjgjv0NS",
+      "full_name": "Sneha Patil",
+      "role": "admin",
+      "department": null,
+      "status": "active",
+      "created_at": "2026-10-19T00:43:13.057587",
+      "updated_at": "2026-10-19T00:43:13.057587"
+    },
+    {
+      "id": 5,
+      "email": "parth.chavan@cliniq.org",
+      "password_hash": "$2b$12$vwmCraVTeL8Tzlj/bd.c5eyrDPVacMh8cFLpUNdidl/sCpjgjv0NS",
+      "full_name": "Dr. Parth Chavan",
+      "role": "doctor",
+      "department": "Cardiology",
+      "status": "active",
+      "created_at": "2026-10-19T00:43:13.057587",
+      "updated_at": "2026-10-19T00:43:13.057587"
+    },
+    {
+      "email": "test.doctor@cliniq.org",
+      "password_hash": "$2b$12$sRP0luTyZIXteDNH5vps/OmPTBAhqjynpnBWHRKeZJoofkPO4tXnW",
+      "full_name": "Dr. Arjun Mehta",
+      "role": "doctor",
+      "department": "Cardiology",
+      "status": "active",
+      "id": 6,
+      "created_at": "2026-10-20T13:12:04.149341",
+      "updated_at": "2026-10-20T13:12:04.149341"
+    }
+  ],
+  "patients": [
+    {
+      "id": "CLQ-10482",
+      "mrn": "MRN-883104",
+      "full_name": "Sunita Jadhav",
+      "date_of_birth": "1967-09-12",
+      "gender": "Female",
+      "contact_number": "+91-9876543210",
+      "reason_for_visit": "Dyspnea and chest pressure",
+      "medical_history": "Hypertension; stable coronary artery disease; hyperlipidemia",
+      "allergies": "Penicillin \u2014 severe urticaria",
+      "current_medications": "Amlodipine 5 mg; Atorvastatin 40 mg; Aspirin 81 mg",
+      "past_treatments": "Cardiac rehabilitation, completed Aug 2024",
+      "assigned_doctor_id": 1,
+      "created_at": "2026-10-19T00:43:13.057587",
+      "updated_at": "2026-10-19T00:43:13.057587"
+    },
+    {
+      "id": "CLQ-10479",
+      "mrn": "MRN-881092",
+      "full_name": "Ramesh Bhosale",
+      "date_of_birth": "1958-03-22",
+      "gender": "Male",
+      "contact_number": "+91-9876543211",
+      "reason_for_visit": "Post-operative review",
+      "medical_history": "Type 2 diabetes; previous MI",
+      "allergies": "None known",
+      "current_medications": "Metformin 500mg; Lisinopril 10mg",
+      "past_treatments": "CABG surgery Nov 2024",
+      "assigned_doctor_id": 1,
+      "created_at": "2026-10-19T00:43:13.057587",
+      "updated_at": "2026-10-19T00:43:13.058609"
+    },
+    {
+      "id": "CLQ-10491",
+      "mrn": "MRN-883891",
+      "full_name": "Manjusha Pawar",
+      "date_of_birth": "1971-07-08",
+      "gender": "Female",
+      "contact_number": "+91-9876543212",
+      "reason_for_visit": "Medication follow-up",
+      "medical_history": "Hypothyroidism; osteoarthritis",
+      "allergies": "Sulfa drugs",
+      "current_medications": "Levothyroxine 75mcg; Ibuprofen as needed",
+      "past_treatments": null,
+      "assigned_doctor_id": 3,
+      "created_at": "2026-10-19T00:43:13.058609",
+      "updated_at": "2026-10-19T00:43:13.058609"
+    },
+    {
+      "id": "CLQ-10496",
+      "mrn": "MRN-884201",
+      "full_name": "Anand Kale",
+      "date_of_birth": "1965-11-15",
+      "gender": "Male",
+      "contact_number": "+91-9876543213",
+      "reason_for_visit": "Abnormal lab review",
+      "medical_history": "Chronic kidney disease stage 3",
+      "allergies": "None known",
+      "current_medications": "Losartan 50mg",
+      "past_treatments": null,
+      "assigned_doctor_id": 3,
+      "created_at": "2026-10-19T00:43:13.058609",
+      "updated_at": "2026-10-19T00:43:13.058609"
+    }
+  ],
+  "appointments": [
+    {
+      "id": 1,
+      "patient_id": "CLQ-10479",
+      "doctor_id": 1,
+      "appointment_time": "2026-10-19T08:30:00",
+      "reason": "Post-operative review",
+      "status": "checked_in",
+      "created_at": "2026-10-19T00:43:13.058609",
+      "updated_at": "2026-10-19T00:43:13.058609"
+    },
+    {
+      "id": 2,
+      "patient_id": "CLQ-10482",
+      "doctor_id": 5,
+      "appointment_time": "2026-10-19T09:15:00",
+      "reason": "Dyspnea and chest pressure",
+      "status": "in_progress",
+      "created_at": "2026-10-19T00:43:13.058609",
+      "updated_at": "2026-10-19T00:43:13.058609"
+    },
+    {
+      "id": 3,
+      "patient_id": "CLQ-10491",
+      "doctor_id": 1,
+      "appointment_time": "2026-10-19T10:00:00",
+      "reason": "Medication follow-up",
+      "status": "scheduled",
+      "created_at": "2026-10-19T00:43:13.058609",
+      "updated_at": "2026-10-19T00:43:13.058609"
+    },
+    {
+      "id": 4,
+      "patient_id": "CLQ-10496",
+      "doctor_id": 5,
+      "appointment_time": "2026-10-19T11:30:00",
+      "reason": "Abnormal lab review",
+      "status": "scheduled",
+      "created_at": "2026-10-19T00:43:13.058609",
+      "updated_at": "2026-10-19T00:43:13.058609"
+    }
+  ],
+  "visits": [
+    {
+      "id": 1,
+      "patient_id": "CLQ-10482",
+      "title": "Current visit opened",
+      "body": "Persistent dyspnea on exertion and intermittent chest pressure reported.",
+      "type": "clinical_note",
+      "visit_date": "2026-10-19T00:43:13.058609",
+      "created_by_id": 1,
+      "created_at": "2026-10-19T00:43:13.058609"
+    },
+    {
+      "id": 2,
+      "patient_id": "CLQ-10482",
+      "title": "Cardiology follow-up",
+      "body": "Ejection fraction stable at 52%. Continue current medications.",
+      "type": "doctor_note",
+      "visit_date": "2026-09-14T00:43:13.058609",
+      "created_by_id": 1,
+      "created_at": "2026-09-14T00:43:13.058609"
+    },
+    {
+      "id": 3,
+      "patient_id": "CLQ-10482",
+      "title": "Complete blood count",
+      "body": "Hemoglobin 11.2 g/dL, mildly below reference range.",
+      "type": "lab_result",
+      "visit_date": "2026-06-03T00:43:13.058609",
+      "created_by_id": null,
+      "created_at": "2026-06-03T00:43:13.058609"
+    }
+  ],
+  "knowledge_sources": [
+    {
+      "id": 1,
+      "name": "ACC/AHA Clinical Guidelines",
+      "type": "guideline_library",
+      "version": "2025.06",
+      "status": "current",
+      "last_synchronized": "2026-10-19T00:43:13.058609"
+    },
+    {
+      "id": 2,
+      "name": "Northlake Formulary",
+      "type": "local_formulary",
+      "version": "v42.8",
+      "status": "current",
+      "last_synchronized": "2026-10-18T22:43:13.058609"
+    },
+    {
+      "id": 3,
+      "name": "DrugBank Clinical",
+      "type": "drug_data",
+      "version": "2025-Q2",
+      "status": "current",
+      "last_synchronized": "2026-10-17T00:43:13.058609"
+    },
+    {
+      "id": 4,
+      "name": "NICE Guidance",
+      "type": "guideline_library",
+      "version": "2025.05",
+      "status": "update_pending",
+      "last_synchronized": "2026-10-02T00:43:13.058609"
+    }
+  ],
+  "risk_factors": [
+    {
+      "id": 1,
+      "name": "Known coronary artery disease"
+    },
+    {
+      "id": 2,
+      "name": "Hypertension"
+    },
+    {
+      "id": 3,
+      "name": "Hyperlipidemia"
+    },
+    {
+      "id": 4,
+      "name": "Age over 55"
+    },
+    {
+      "id": 5,
+      "name": "Type 2 diabetes"
+    },
+    {
+      "id": 6,
+      "name": "Previous MI"
+    },
+    {
+      "id": 7,
+      "name": "Chronic kidney disease"
+    },
+    {
+      "id": 8,
+      "name": "Smoking history"
+    },
+    {
+      "name": "Family history of CAD",
+      "id": 9,
+      "created_at": "2026-10-19T08:28:46.515005",
+      "updated_at": "2026-10-19T08:28:46.515005"
+    },
+    {
+      "name": "Obesity (BMI > 30)",
+      "id": 10,
+      "created_at": "2026-10-19T08:28:46.553237",
+      "updated_at": "2026-10-19T08:28:46.553237"
+    },
+    {
+      "name": "Essential hypertension",
+      "id": 11,
+      "created_at": "2026-10-19T11:20:32.964049",
+      "updated_at": "2026-10-19T11:20:32.964049"
+    },
+    {
+      "name": "Age-related cardiovascular risk",
+      "id": 12,
+      "created_at": "2026-10-19T11:20:33.021044",
+      "updated_at": "2026-10-19T11:20:33.021044"
+    },
+    {
+      "name": "Age over 55 (assuming)",
+      "id": 13,
+      "created_at": "2026-10-20T13:07:45.869984",
+      "updated_at": "2026-10-20T13:07:45.869984"
+    },
+    {
+      "name": "History of cardiac rehabilitation",
+      "id": 14,
+      "created_at": "2026-10-20T13:07:45.938107",
+      "updated_at": "2026-10-20T13:07:45.938107"
+    },
+    {
+      "name": "Known hypothyroidism",
+      "id": 15,
+      "created_at": "2026-10-20T13:14:23.775282",
+      "updated_at": "2026-10-20T13:14:23.775282"
+    },
+    {
+      "name": "Osteoarthritis",
+      "id": 16,
+      "created_at": "2026-10-20T13:14:23.845017",
+      "updated_at": "2026-10-20T13:14:23.845017"
+    },
+    {
+      "name": "Undiagnosed or undertreated hypothyroidism",
+      "id": 17,
+      "created_at": "2026-10-20T13:14:23.913410",
+      "updated_at": "2026-10-20T13:14:23.913410"
+    }
+  ],
+  "clinical_analyses": [
+    {
+      "patient_id": "CLQ-10482",
+      "report_id": "CDS-2026-3281",
+      "status": "processing",
+      "new_symptoms": "Severe crushing chest pain radiating to left arm and jaw.",
+      "observations": "Diaphoretic, pale, BP 168/98 mmHg, HR 102 bpm.",
+      "test_results": "ECG shows 2mm ST-elevation in inferior leads.",
+      "clinical_notes": "Suspected acute inferior STEMI.",
+      "reviewed_by_id": "5",
+      "id": 1,
+      "created_at": "2026-10-19T08:28:14.871525",
+      "updated_at": "2026-10-19T08:28:14.871525"
+    },
+    {
+      "patient_id": "CLQ-10482",
+      "report_id": "CDS-2026-9902",
+      "status": "awaiting_review",
+      "new_symptoms": "Severe crushing chest pain radiating to left arm and jaw.",
+      "observations": "Diaphoretic, pale, BP 168/98 mmHg, HR 102 bpm.",
+      "test_results": "ECG shows 2mm ST-elevation in inferior leads.",
+      "clinical_notes": "Suspected acute inferior STEMI.",
+      "reviewed_by_id": "5",
+      "generated_at": "2026-10-19T08:28:43.589187",
+      "id": 2,
+      "created_at": "2026-10-19T08:28:43.590180",
+      "updated_at": "2026-10-19T08:28:46.615544"
+    },
+    {
+      "patient_id": "CLQ-10482",
+      "report_id": "CDS-2026-0533",
+      "status": "approve",
+      "new_symptoms": "Shortness of breath on exertion for 5 days. Intermittent central chest pressure.",
+      "observations": "Patient alert. Mild bilateral ankle edema.",
+      "test_results": "ECG: normal sinus rhythm. Troponin pending.",
+      "clinical_notes": "Troponin I, BNP, echocardiogram requested.",
+      "reviewed_by_id": "5",
+      "generated_at": "2026-10-19T08:45:00.969091",
+      "id": 3,
+      "created_at": "2026-10-19T08:45:00.970733",
+      "updated_at": "2026-10-19T08:45:04.529934",
+      "reviewed_at": "2026-10-19T08:45:04.511367"
+    },
+    {
+      "patient_id": "CLQ-10482",
+      "report_id": "CDS-2026-7872",
+      "status": "approve",
+      "new_symptoms": "Shortness of breath on exertion for 5 days. Intermittent central chest pressure.",
+      "observations": "Patient alert. Mild bilateral ankle edema.",
+      "test_results": "ECG: normal sinus rhythm. Troponin pending.",
+      "clinical_notes": "Troponin I, BNP, echocardiogram requested.",
+      "reviewed_by_id": "5",
+      "generated_at": "2026-10-19T08:45:46.930847",
+      "id": 4,
+      "created_at": "2026-10-19T08:45:46.932447",
+      "updated_at": "2026-10-19T08:45:50.490470",
+      "reviewed_at": "2026-10-19T08:45:50.468734"
+    },
+    {
+      "patient_id": "CLQ-10482",
+      "report_id": "CDS-2026-3414",
+      "status": "approve",
+      "new_symptoms": "Shortness of breath on exertion for 5 days. Intermittent central chest pressure.",
+      "observations": "Patient alert. Mild bilateral ankle edema.",
+      "test_results": "ECG: normal sinus rhythm. Troponin pending.",
+      "clinical_notes": "Troponin I, BNP, echocardiogram requested.",
+      "reviewed_by_id": "5",
+      "generated_at": "2026-10-19T11:20:30.139988",
+      "id": 5,
+      "created_at": "2026-10-19T11:20:30.141092",
+      "updated_at": "2026-10-19T11:20:33.699442",
+      "reviewed_at": "2026-10-19T11:20:33.675967"
+    },
+    {
+      "patient_id": "CLQ-10482",
+      "report_id": "CDS-2026-1764",
+      "status": "awaiting_review",
+      "new_symptoms": "Exertional retrosternal pressure radiating to jaw, relieved by sublingual nitroglycerin",
+      "observations": "BP 138/86, HR 78 bpm regular, S4 gallop heard on cardiac auscultation",
+      "test_results": "Resting ECG showed 1mm horizontal ST depression in V4-V6. Troponin-I: 0.02 ng/mL (normal)",
+      "clinical_notes": "Urgent outpatient evaluation for recurrent angina pectoris.",
+      "reviewed_by_id": "5",
+      "generated_at": "2026-10-20T13:07:37.926962",
+      "id": 6,
+      "created_at": "2026-10-20T13:07:37.927962",
+      "updated_at": "2026-10-20T13:07:45.979699"
+    },
+    {
+      "patient_id": "CLQ-10482",
+      "report_id": "CDS-2026-9756",
+      "status": "approve",
+      "new_symptoms": "Exertional retrosternal pressure radiating to jaw, relieved by sublingual nitroglycerin",
+      "observations": "BP 138/86, HR 78 bpm regular, S4 gallop heard on cardiac auscultation",
+      "test_results": "Resting ECG showed 1mm horizontal ST depression in V4-V6. Troponin-I: 0.02 ng/mL (normal)",
+      "clinical_notes": "Urgent outpatient evaluation for recurrent angina pectoris.",
+      "reviewed_by_id": "5",
+      "generated_at": "2026-10-20T13:08:08.652921",
+      "id": 7,
+      "created_at": "2026-10-20T13:08:08.654915",
+      "updated_at": "2026-10-20T13:08:16.717054",
+      "reviewed_at": "2026-10-20T13:08:16.694615"
+    },
+    {
+      "patient_id": "CLQ-10491",
+      "report_id": "CDS-2026-1131",
+      "status": "awaiting_review",
+      "new_symptoms": "Shortness of breath on exertion for 5 days. Intermittent central chest pressure, resolving with rest.",
+      "observations": "Patient alert and oriented. No acute distress at rest. Mild bilateral ankle edema.",
+      "test_results": "ECG: normal sinus rhythm, nonspecific ST changes. Troponin pending.",
+      "clinical_notes": "Tests to perform: Troponin I, BNP, chest X-ray, repeat echocardiogram",
+      "reviewed_by_id": "5",
+      "generated_at": "2026-10-20T13:14:16.717219",
+      "id": 8,
+      "created_at": "2026-10-20T13:14:16.719363",
+      "updated_at": "2026-10-20T13:14:23.975341"
+    }
+  ],
+  "diagnoses": [
+    {
+      "analysis_id": 2,
+      "rank": 1,
+      "name": "Stable angina",
+      "confidence_percentage": 80.0,
+      "confidence_label": "high",
+      "summary": "Exertional chest pressure resolving with rest is consistent with chronic coronary syndrome.",
+      "evidence": [
+        "Known coronary artery disease",
+        "Symptoms are exertional and resolve with rest",
+        "Nonspecific ST changes without acute ischemic pattern"
+      ],
+      "id": 1,
+      "created_at": "2026-10-19T08:28:46.355648",
+      "updated_at": "2026-10-19T08:28:46.355648"
+    },
+    {
+      "analysis_id": 2,
+      "rank": 2,
+      "name": "Symptomatic anemia",
+      "confidence_percentage": 80.0,
+      "confidence_label": "high",
+      "summary": "Prior iron-deficiency anemia could contribute to dyspnea; current blood count is not available.",
+      "evidence": [
+        "History of iron-deficiency anemia",
+        "Hemoglobin 11.2 g/dL in February",
+        "Fatigue reported during exertion"
+      ],
+      "id": 2,
+      "created_at": "2026-10-19T08:28:46.372590",
+      "updated_at": "2026-10-19T08:28:46.372590"
+    },
+    {
+      "analysis_id": 2,
+      "rank": 3,
+      "name": "Heart failure exacerbation",
+      "confidence_percentage": 85.0,
+      "confidence_label": "high",
+      "summary": "Dyspnea and peripheral edema may indicate early volume overload; BNP and imaging are pending.",
+      "evidence": [
+        "Dyspnea on exertion",
+        "Mild bilateral ankle edema",
+        "Previous ejection fraction 52%"
+      ],
+      "id": 3,
+      "created_at": "2026-10-19T08:28:46.393210",
+      "updated_at": "2026-10-19T08:28:46.393210"
+    },
+    {
+      "analysis_id": 3,
+      "rank": 1,
+      "name": "Pneumonia",
+      "confidence_percentage": 87.0,
+      "confidence_label": "high",
+      "summary": "Respiratory symptoms with fever suggest possible pulmonary infection.",
+      "evidence": [
+        "Productive cough",
+        "Elevated temperature",
+        "Chest X-ray shows infiltrate"
+      ],
+      "id": 4,
+      "created_at": "2026-10-19T08:45:03.648055",
+      "updated_at": "2026-10-19T08:45:03.648055"
+    },
+    {
+      "analysis_id": 3,
+      "rank": 2,
+      "name": "Pulmonary embolism",
+      "confidence_percentage": 64.0,
+      "confidence_label": "needs_review",
+      "summary": "Acute dyspnea with risk factors warrants PE evaluation.",
+      "evidence": [
+        "Sudden onset dyspnea",
+        "Risk factors for thrombosis",
+        "D-dimer and imaging needed"
+      ],
+      "id": 5,
+      "created_at": "2026-10-19T08:45:03.667989",
+      "updated_at": "2026-10-19T08:45:03.667989"
+    },
+    {
+      "analysis_id": 3,
+      "rank": 3,
+      "name": "Symptomatic anemia",
+      "confidence_percentage": 69.0,
+      "confidence_label": "needs_review",
+      "summary": "Prior iron-deficiency anemia could contribute to dyspnea; current blood count is not available.",
+      "evidence": [
+        "History of iron-deficiency anemia",
+        "Hemoglobin 11.2 g/dL in February",
+        "Fatigue reported during exertion"
+      ],
+      "id": 6,
+      "created_at": "2026-10-19T08:45:03.686829",
+      "updated_at": "2026-10-19T08:45:03.686829"
+    },
+    {
+      "analysis_id": 4,
+      "rank": 1,
+      "name": "Acute coronary syndrome",
+      "confidence_percentage": 84.0,
+      "confidence_label": "high",
+      "summary": "Chest pain with risk factors requires urgent evaluation to exclude acute MI.",
+      "evidence": [
+        "Cardiovascular risk factors present",
+        "New-onset chest pain",
+        "Troponin testing needed"
+      ],
+      "id": 7,
+      "created_at": "2026-10-19T08:45:49.544420",
+      "updated_at": "2026-10-19T08:45:49.544420"
+    },
+    {
+      "analysis_id": 4,
+      "rank": 2,
+      "name": "Stable angina",
+      "confidence_percentage": 70.0,
+      "confidence_label": "high",
+      "summary": "Exertional chest pressure resolving with rest is consistent with chronic coronary syndrome.",
+      "evidence": [
+        "Known coronary artery disease",
+        "Symptoms are exertional and resolve with rest",
+        "Nonspecific ST changes without acute ischemic pattern"
+      ],
+      "id": 8,
+      "created_at": "2026-10-19T08:45:49.563939",
+      "updated_at": "2026-10-19T08:45:49.563939"
+    },
+    {
+      "analysis_id": 4,
+      "rank": 3,
+      "name": "Symptomatic anemia",
+      "confidence_percentage": 46.0,
+      "confidence_label": "low",
+      "summary": "Prior iron-deficiency anemia could contribute to dyspnea; current blood count is not available.",
+      "evidence": [
+        "History of iron-deficiency anemia",
+        "Hemoglobin 11.2 g/dL in February",
+        "Fatigue reported during exertion"
+      ],
+      "id": 9,
+      "created_at": "2026-10-19T08:45:49.582404",
+      "updated_at": "2026-10-19T08:45:49.582404"
+    },
+    {
+      "analysis_id": 5,
+      "rank": 1,
+      "name": "Stable Angina Pectoris",
+      "confidence_percentage": 82.0,
+      "confidence_label": "high",
+      "summary": "Exertional retrosternal chest pressure resolving promptly with rest in a patient with established cardiovascular disease.",
+      "evidence": [
+        "Exertional onset resolving with rest",
+        "Established history of coronary artery disease",
+        "ECG demonstrates baseline nonspecific ST-T changes without acute injury current"
+      ],
+      "id": 10,
+      "created_at": "2026-10-19T11:20:32.806196",
+      "updated_at": "2026-10-19T11:20:32.806196"
+    },
+    {
+      "analysis_id": 5,
+      "rank": 2,
+      "name": "Early Heart Failure Exacerbation",
+      "confidence_percentage": 68.0,
+      "confidence_label": "moderate",
+      "summary": "Progressive exertional dyspnea accompanied by mild bilateral peripheral edema suggesting mild ventricular decompensation.",
+      "evidence": [
+        "Bilateral ankle edema on physical examination",
+        "Exertional dyspnea over a 5-day course",
+        "Underlying hypertension and chronic ischemic substrate"
+      ],
+      "id": 11,
+      "created_at": "2026-10-19T11:20:32.823196",
+      "updated_at": "2026-10-19T11:20:32.823196"
+    },
+    {
+      "analysis_id": 5,
+      "rank": 3,
+      "name": "Non-ST-Elevation Acute Coronary Syndrome (NSTE-ACS)",
+      "confidence_percentage": 42.0,
+      "confidence_label": "low",
+      "summary": "Must be actively ruled out given changing symptom frequency and coronary risk profile.",
+      "evidence": [
+        "Recent change in exertional tolerance",
+        "Serial cardiac biomarkers currently pending"
+      ],
+      "id": 12,
+      "created_at": "2026-10-19T11:20:32.842715",
+      "updated_at": "2026-10-19T11:20:32.842715"
+    },
+    {
+      "analysis_id": 6,
+      "rank": 1,
+      "name": "Stable Angina Pectoris",
+      "confidence_percentage": 85.0,
+      "confidence_label": "high",
+      "summary": "Exertional retrosternal pressure resolving with rest, consistent with chronic coronary artery disease.",
+      "evidence": [
+        "Symptom onset during exertion",
+        "History of coronary artery disease",
+        "ST depression on resting ECG"
+      ],
+      "id": 13,
+      "created_at": "2026-10-20T13:07:45.689753",
+      "updated_at": "2026-10-20T13:07:45.689753"
+    },
+    {
+      "analysis_id": 6,
+      "rank": 2,
+      "name": "Acute Coronary Syndrome",
+      "confidence_percentage": 40.0,
+      "confidence_label": "moderate",
+      "summary": "Although troponin-I is normal, the patient's symptoms and ECG changes warrant consideration of ACS.",
+      "evidence": [
+        "Exertional retrosternal pressure",
+        "ST depression on resting ECG",
+        "History of coronary artery disease"
+      ],
+      "id": 14,
+      "created_at": "2026-10-20T13:07:45.710749",
+      "updated_at": "2026-10-20T13:07:45.710749"
+    },
+    {
+      "analysis_id": 7,
+      "rank": 1,
+      "name": "Stable Angina Pectoris",
+      "confidence_percentage": 85.0,
+      "confidence_label": "high",
+      "summary": "Exertional retrosternal pressure resolving with rest, consistent with chronic coronary artery disease.",
+      "evidence": [
+        "Symptom onset during exertion",
+        "History of coronary artery disease",
+        "ST depression on resting ECG"
+      ],
+      "id": 15,
+      "created_at": "2026-10-20T13:08:16.412682",
+      "updated_at": "2026-10-20T13:08:16.412682"
+    },
+    {
+      "analysis_id": 7,
+      "rank": 2,
+      "name": "Acute Coronary Syndrome",
+      "confidence_percentage": 40.0,
+      "confidence_label": "moderate",
+      "summary": "Although troponin-I is normal, the patient's symptoms and ECG changes warrant consideration of ACS.",
+      "evidence": [
+        "Exertional retrosternal pressure",
+        "ST depression on resting ECG",
+        "History of coronary artery disease"
+      ],
+      "id": 16,
+      "created_at": "2026-10-20T13:08:16.433785",
+      "updated_at": "2026-10-20T13:08:16.433785"
+    },
+    {
+      "analysis_id": 8,
+      "rank": 1,
+      "name": "Stable Angina Pectoris",
+      "confidence_percentage": 80.0,
+      "confidence_label": "high",
+      "summary": "Exertional retrosternal pressure resolving with rest, consistent with myocardial oxygen demand-supply mismatch.",
+      "evidence": [
+        "Intermittent central chest pressure resolving with rest",
+        "ECG: nonspecific ST changes"
+      ],
+      "id": 17,
+      "created_at": "2026-10-20T13:14:23.614823",
+      "updated_at": "2026-10-20T13:14:23.614823"
+    },
+    {
+      "analysis_id": 8,
+      "rank": 2,
+      "name": "Hypothyroidism Exacerbation",
+      "confidence_percentage": 40.0,
+      "confidence_label": "moderate",
+      "summary": "Undiagnosed or undertreated hypothyroidism may contribute to fatigue and shortness of breath.",
+      "evidence": [
+        "History of hypothyroidism",
+        "Current Levothyroxine 75mcg therapy"
+      ],
+      "id": 18,
+      "created_at": "2026-10-20T13:14:23.644295",
+      "updated_at": "2026-10-20T13:14:23.644295"
+    }
+  ],
+  "recommendations": [
+    {
+      "analysis_id": 2,
+      "step_number": 1,
+      "title": "Schedule pulmonary function testing",
+      "description": "Rule out chronic obstructive pulmonary disease or restrictive lung disease.",
+      "id": 1,
+      "created_at": "2026-10-19T08:28:46.409469",
+      "updated_at": "2026-10-19T08:28:46.409469"
+    },
+    {
+      "analysis_id": 2,
+      "step_number": 2,
+      "title": "Complete serial high-sensitivity troponin testing",
+      "description": "Exclude acute myocardial injury before outpatient management.",
+      "id": 2,
+      "created_at": "2026-10-19T08:28:46.429579",
+      "updated_at": "2026-10-19T08:28:46.429579"
+    },
+    {
+      "analysis_id": 2,
+      "step_number": 3,
+      "title": "Initiate diuretic therapy",
+      "description": "Consider low-dose furosemide if volume overload is confirmed.",
+      "id": 3,
+      "created_at": "2026-10-19T08:28:46.448186",
+      "updated_at": "2026-10-19T08:28:46.448186"
+    },
+    {
+      "analysis_id": 3,
+      "step_number": 1,
+      "title": "Initiate diuretic therapy",
+      "description": "Consider low-dose furosemide if volume overload is confirmed.",
+      "id": 4,
+      "created_at": "2026-10-19T08:45:03.705878",
+      "updated_at": "2026-10-19T08:45:03.705878"
+    },
+    {
+      "analysis_id": 3,
+      "step_number": 2,
+      "title": "Continue current aspirin and statin therapy",
+      "description": "Review antianginal optimization after acute causes are excluded.",
+      "id": 5,
+      "created_at": "2026-10-19T08:45:03.724743",
+      "updated_at": "2026-10-19T08:45:03.724743"
+    },
+    {
+      "analysis_id": 3,
+      "step_number": 3,
+      "title": "Schedule pulmonary function testing",
+      "description": "Rule out chronic obstructive pulmonary disease or restrictive lung disease.",
+      "id": 6,
+      "created_at": "2026-10-19T08:45:03.745006",
+      "updated_at": "2026-10-19T08:45:03.745006"
+    },
+    {
+      "analysis_id": 4,
+      "step_number": 1,
+      "title": "Arrange stress echocardiography",
+      "description": "Assess for inducible ischemia and ventricular function under stress.",
+      "id": 7,
+      "created_at": "2026-10-19T08:45:49.602168",
+      "updated_at": "2026-10-19T08:45:49.602168"
+    },
+    {
+      "analysis_id": 4,
+      "step_number": 2,
+      "title": "Obtain BNP and chest radiograph",
+      "description": "Assess possible volume overload given dyspnea and peripheral edema.",
+      "id": 8,
+      "created_at": "2026-10-19T08:45:49.622278",
+      "updated_at": "2026-10-19T08:45:49.622278"
+    },
+    {
+      "analysis_id": 4,
+      "step_number": 3,
+      "title": "Order complete blood count and iron studies",
+      "description": "Evaluate for anemia as contributing factor to symptoms.",
+      "id": 9,
+      "created_at": "2026-10-19T08:45:49.641550",
+      "updated_at": "2026-10-19T08:45:49.641550"
+    },
+    {
+      "analysis_id": 5,
+      "step_number": 1,
+      "title": "Complete serial high-sensitivity Troponin I testing",
+      "description": "Rule out acute myocardial necrosis (0h and 2h delta protocol per 2023 AHA/ACC guideline).",
+      "id": 10,
+      "created_at": "2026-10-19T11:20:32.859076",
+      "updated_at": "2026-10-19T11:20:32.859076"
+    },
+    {
+      "analysis_id": 5,
+      "step_number": 2,
+      "title": "Obtain serum NT-proBNP and 2-view chest radiograph",
+      "description": "Evaluate for pulmonary vascular congestion and early cardiac volume overload.",
+      "id": 11,
+      "created_at": "2026-10-19T11:20:32.876511",
+      "updated_at": "2026-10-19T11:20:32.876511"
+    },
+    {
+      "analysis_id": 5,
+      "step_number": 3,
+      "title": "Continue antiplatelet and high-intensity statin therapy",
+      "description": "Maintain aspirin 81mg daily and atorvastatin 40mg daily with guideline-directed anti-anginal optimization.",
+      "id": 12,
+      "created_at": "2026-10-19T11:20:32.896043",
+      "updated_at": "2026-10-19T11:20:32.896043"
+    },
+    {
+      "analysis_id": 5,
+      "step_number": 4,
+      "title": "Schedule outpatient transthoracic echocardiogram (TTE)",
+      "description": "Assess left ventricular ejection fraction and regional wall motion abnormalities.",
+      "id": 13,
+      "created_at": "2026-10-19T11:20:32.912043",
+      "updated_at": "2026-10-19T11:20:32.912043"
+    },
+    {
+      "analysis_id": 6,
+      "step_number": 1,
+      "title": "Complete serial high-sensitivity Troponin testing",
+      "description": "Rule out acute myocardial necrosis (0h and 2h delta protocol per AHA/ACC).",
+      "id": 14,
+      "created_at": "2026-10-20T13:07:45.731750",
+      "updated_at": "2026-10-20T13:07:45.731750"
+    },
+    {
+      "analysis_id": 6,
+      "step_number": 2,
+      "title": "Optimize anti-anginal therapy",
+      "description": "Consider increasing Amlodipine dose or adding a beta blocker to control symptoms.",
+      "id": 15,
+      "created_at": "2026-10-20T13:07:45.751748",
+      "updated_at": "2026-10-20T13:07:45.751748"
+    },
+    {
+      "analysis_id": 6,
+      "step_number": 3,
+      "title": "Cardiac stress test or coronary angiography",
+      "description": "Further evaluate coronary artery disease and assess for potential revascularization.",
+      "id": 16,
+      "created_at": "2026-10-20T13:07:45.771653",
+      "updated_at": "2026-10-20T13:07:45.771653"
+    },
+    {
+      "analysis_id": 7,
+      "step_number": 1,
+      "title": "Complete serial high-sensitivity Troponin testing",
+      "description": "Rule out acute myocardial necrosis (0h and 2h delta protocol per AHA/ACC).",
+      "id": 17,
+      "created_at": "2026-10-20T13:08:16.454270",
+      "updated_at": "2026-10-20T13:08:16.454270"
+    },
+    {
+      "analysis_id": 7,
+      "step_number": 2,
+      "title": "Optimize anti-anginal therapy",
+      "description": "Consider increasing Amlodipine dose or adding a beta blocker to control symptoms.",
+      "id": 18,
+      "created_at": "2026-10-20T13:08:16.474301",
+      "updated_at": "2026-10-20T13:08:16.474301"
+    },
+    {
+      "analysis_id": 7,
+      "step_number": 3,
+      "title": "Cardiac stress test or coronary angiography",
+      "description": "Further evaluate coronary artery disease and assess for potential revascularization.",
+      "id": 19,
+      "created_at": "2026-10-20T13:08:16.498201",
+      "updated_at": "2026-10-20T13:08:16.498201"
+    },
+    {
+      "analysis_id": 8,
+      "step_number": 1,
+      "title": "Complete serial high-sensitivity Troponin testing",
+      "description": "Rule out acute myocardial necrosis (0h and 2h delta protocol per AHA/ACC).",
+      "id": 20,
+      "created_at": "2026-10-20T13:14:23.676169",
+      "updated_at": "2026-10-20T13:14:23.676169"
+    },
+    {
+      "analysis_id": 8,
+      "step_number": 2,
+      "title": "Echocardiogram",
+      "description": "Assess left ventricular function and rule out underlying structural heart disease.",
+      "id": 21,
+      "created_at": "2026-10-20T13:14:23.709719",
+      "updated_at": "2026-10-20T13:14:23.709719"
+    },
+    {
+      "analysis_id": 8,
+      "step_number": 3,
+      "title": "Optimize Levothyroxine therapy",
+      "description": "Reassess thyroid function and adjust medication as needed to prevent exacerbation of hypothyroidism.",
+      "id": 22,
+      "created_at": "2026-10-20T13:14:23.740797",
+      "updated_at": "2026-10-20T13:14:23.740797"
+    }
+  ],
+  "drug_interactions": [
+    {
+      "analysis_id": 2,
+      "severity": "caution",
+      "title": "Monitor potassium with ACE inhibitor and potassium supplements",
+      "description": "Combination may lead to hyperkalemia. Check serum potassium levels within 1-2 weeks.",
+      "id": 1,
+      "created_at": "2026-10-19T08:28:46.472065",
+      "updated_at": "2026-10-19T08:28:46.472065"
+    },
+    {
+      "analysis_id": 3,
+      "severity": "caution",
+      "title": "Monitor potassium with ACE inhibitor and potassium supplements",
+      "description": "Combination may lead to hyperkalemia. Check serum potassium levels within 1-2 weeks.",
+      "id": 2,
+      "created_at": "2026-10-19T08:45:03.762191",
+      "updated_at": "2026-10-19T08:45:03.762191"
+    },
+    {
+      "analysis_id": 5,
+      "severity": "critical",
+      "title": "Avoid macrolide antibiotics (Clarithromycin/Erythromycin) with Atorvastatin",
+      "description": "CYP3A4 inhibition can cause a 4-fold elevation in plasma statin levels, dramatically increasing the risk of rhabdomyolysis and acute nephrotoxicity. Use azithromycin or doxycycline if antibiotic therapy is required.",
+      "id": 3,
+      "created_at": "2026-10-19T11:20:32.930047",
+      "updated_at": "2026-10-19T11:20:32.930047"
+    },
+    {
+      "analysis_id": 6,
+      "severity": "moderate",
+      "title": "Monitor for increased risk of myopathy with Atorvastatin and Amlodipine",
+      "description": "While no critical interactions are present, close monitoring is necessary for potential muscle-related adverse effects.",
+      "id": 4,
+      "created_at": "2026-10-20T13:07:45.793080",
+      "updated_at": "2026-10-20T13:07:45.793080"
+    },
+    {
+      "analysis_id": 7,
+      "severity": "moderate",
+      "title": "Monitor for increased risk of myopathy with Atorvastatin and Amlodipine",
+      "description": "Although rare, the combination may increase the risk of myopathy; monitor for muscle pain or weakness.",
+      "id": 5,
+      "created_at": "2026-10-20T13:08:16.519898",
+      "updated_at": "2026-10-20T13:08:16.519898"
+    }
+  ],
+  "analysis_risk_factors": [
+    {
+      "analysis_id": 2,
+      "risk_factor_id": 4,
+      "id": 1,
+      "created_at": "2026-10-19T08:28:46.493432",
+      "updated_at": "2026-10-19T08:28:46.493432"
+    },
+    {
+      "analysis_id": 2,
+      "risk_factor_id": 9,
+      "id": 2,
+      "created_at": "2026-10-19T08:28:46.534886",
+      "updated_at": "2026-10-19T08:28:46.534886"
+    },
+    {
+      "analysis_id": 2,
+      "risk_factor_id": 10,
+      "id": 3,
+      "created_at": "2026-10-19T08:28:46.573114",
+      "updated_at": "2026-10-19T08:28:46.573114"
+    },
+    {
+      "analysis_id": 2,
+      "risk_factor_id": 2,
+      "id": 4,
+      "created_at": "2026-10-19T08:28:46.593104",
+      "updated_at": "2026-10-19T08:28:46.593104"
+    },
+    {
+      "analysis_id": 3,
+      "risk_factor_id": 1,
+      "id": 5,
+      "created_at": "2026-10-19T08:45:03.785354",
+      "updated_at": "2026-10-19T08:45:03.785354"
+    },
+    {
+      "analysis_id": 3,
+      "risk_factor_id": 5,
+      "id": 6,
+      "created_at": "2026-10-19T08:45:03.806607",
+      "updated_at": "2026-10-19T08:45:03.806607"
+    },
+    {
+      "analysis_id": 3,
+      "risk_factor_id": 2,
+      "id": 7,
+      "created_at": "2026-10-19T08:45:03.825746",
+      "updated_at": "2026-10-19T08:45:03.825746"
+    },
+    {
+      "analysis_id": 3,
+      "risk_factor_id": 10,
+      "id": 8,
+      "created_at": "2026-10-19T08:45:03.844749",
+      "updated_at": "2026-10-19T08:45:03.844749"
+    },
+    {
+      "analysis_id": 4,
+      "risk_factor_id": 8,
+      "id": 9,
+      "created_at": "2026-10-19T08:45:49.660876",
+      "updated_at": "2026-10-19T08:45:49.660876"
+    },
+    {
+      "analysis_id": 4,
+      "risk_factor_id": 4,
+      "id": 10,
+      "created_at": "2026-10-19T08:45:49.680462",
+      "updated_at": "2026-10-19T08:45:49.680462"
+    },
+    {
+      "analysis_id": 4,
+      "risk_factor_id": 1,
+      "id": 11,
+      "created_at": "2026-10-19T08:45:49.699064",
+      "updated_at": "2026-10-19T08:45:49.699064"
+    },
+    {
+      "analysis_id": 4,
+      "risk_factor_id": 9,
+      "id": 12,
+      "created_at": "2026-10-19T08:45:49.719749",
+      "updated_at": "2026-10-19T08:45:49.719749"
+    },
+    {
+      "analysis_id": 5,
+      "risk_factor_id": 1,
+      "id": 13,
+      "created_at": "2026-10-19T11:20:32.946044",
+      "updated_at": "2026-10-19T11:20:32.946044"
+    },
+    {
+      "analysis_id": 5,
+      "risk_factor_id": 11,
+      "id": 14,
+      "created_at": "2026-10-19T11:20:32.981046",
+      "updated_at": "2026-10-19T11:20:32.981046"
+    },
+    {
+      "analysis_id": 5,
+      "risk_factor_id": 3,
+      "id": 15,
+      "created_at": "2026-10-19T11:20:32.998048",
+      "updated_at": "2026-10-19T11:20:32.998048"
+    },
+    {
+      "analysis_id": 5,
+      "risk_factor_id": 12,
+      "id": 16,
+      "created_at": "2026-10-19T11:20:33.039884",
+      "updated_at": "2026-10-19T11:20:33.039884"
+    },
+    {
+      "analysis_id": 6,
+      "risk_factor_id": 1,
+      "id": 17,
+      "created_at": "2026-10-20T13:07:45.812520",
+      "updated_at": "2026-10-20T13:07:45.812520"
+    },
+    {
+      "analysis_id": 6,
+      "risk_factor_id": 2,
+      "id": 18,
+      "created_at": "2026-10-20T13:07:45.832514",
+      "updated_at": "2026-10-20T13:07:45.832514"
+    },
+    {
+      "analysis_id": 6,
+      "risk_factor_id": 3,
+      "id": 19,
+      "created_at": "2026-10-20T13:07:45.851514",
+      "updated_at": "2026-10-20T13:07:45.851514"
+    },
+    {
+      "analysis_id": 6,
+      "risk_factor_id": 13,
+      "id": 20,
+      "created_at": "2026-10-20T13:07:45.917108",
+      "updated_at": "2026-10-20T13:07:45.917108"
+    },
+    {
+      "analysis_id": 6,
+      "risk_factor_id": 14,
+      "id": 21,
+      "created_at": "2026-10-20T13:07:45.959103",
+      "updated_at": "2026-10-20T13:07:45.959103"
+    },
+    {
+      "analysis_id": 7,
+      "risk_factor_id": 1,
+      "id": 22,
+      "created_at": "2026-10-20T13:08:16.541487",
+      "updated_at": "2026-10-20T13:08:16.541487"
+    },
+    {
+      "analysis_id": 7,
+      "risk_factor_id": 2,
+      "id": 23,
+      "created_at": "2026-10-20T13:08:16.561951",
+      "updated_at": "2026-10-20T13:08:16.561951"
+    },
+    {
+      "analysis_id": 7,
+      "risk_factor_id": 3,
+      "id": 24,
+      "created_at": "2026-10-20T13:08:16.585772",
+      "updated_at": "2026-10-20T13:08:16.585772"
+    },
+    {
+      "analysis_id": 7,
+      "risk_factor_id": 13,
+      "id": 25,
+      "created_at": "2026-10-20T13:08:16.608471",
+      "updated_at": "2026-10-20T13:08:16.608471"
+    },
+    {
+      "analysis_id": 7,
+      "risk_factor_id": 14,
+      "id": 26,
+      "created_at": "2026-10-20T13:08:16.628967",
+      "updated_at": "2026-10-20T13:08:16.628967"
+    },
+    {
+      "analysis_id": 8,
+      "risk_factor_id": 15,
+      "id": 27,
+      "created_at": "2026-10-20T13:14:23.807760",
+      "updated_at": "2026-10-20T13:14:23.807760"
+    },
+    {
+      "analysis_id": 8,
+      "risk_factor_id": 16,
+      "id": 28,
+      "created_at": "2026-10-20T13:14:23.879087",
+      "updated_at": "2026-10-20T13:14:23.879087"
+    },
+    {
+      "analysis_id": 8,
+      "risk_factor_id": 17,
+      "id": 29,
+      "created_at": "2026-10-20T13:14:23.944308",
+      "updated_at": "2026-10-20T13:14:23.944308"
+    }
+  ],
+  "clinical_decisions": [
+    {
+      "analysis_id": 3,
+      "decision_type": "approve",
+      "clinician_notes": "Plan approved. Proceeding with urgent troponin and echocardiography.",
+      "attestation_confirmed": true,
+      "decided_by_id": "5",
+      "id": 1,
+      "created_at": "2026-10-19T08:45:04.508153",
+      "updated_at": "2026-10-19T08:45:04.508153"
+    },
+    {
+      "analysis_id": 4,
+      "decision_type": "approve",
+      "clinician_notes": "Plan approved. Proceeding with urgent troponin and echocardiography.",
+      "attestation_confirmed": true,
+      "decided_by_id": "5",
+      "decided_at": "2026-10-19T08:45:50.468734",
+      "id": 2,
+      "created_at": "2026-10-19T08:45:50.469832",
+      "updated_at": "2026-10-19T08:45:50.469832"
+    },
+    {
+      "analysis_id": 5,
+      "decision_type": "approve",
+      "clinician_notes": "Plan approved. Proceeding with urgent troponin and echocardiography.",
+      "attestation_confirmed": true,
+      "decided_by_id": "5",
+      "decided_at": "2026-10-19T11:20:33.675967",
+      "id": 3,
+      "created_at": "2026-10-19T11:20:33.677552",
+      "updated_at": "2026-10-19T11:20:33.677552"
+    },
+    {
+      "analysis_id": 7,
+      "decision_type": "approve",
+      "clinician_notes": null,
+      "attestation_confirmed": true,
+      "decided_by_id": "5",
+      "decided_at": "2026-10-20T13:08:16.694615",
+      "id": 4,
+      "created_at": "2026-10-20T13:08:16.696613",
+      "updated_at": "2026-10-20T13:08:16.696613"
+    }
+  ],
+  "documents": [
+    {
+      "patient_id": "CLQ-10482",
+      "filename": "echocardiogram_report.pdf",
+      "file_type": "application/pdf",
+      "category": "imaging",
+      "file_url": "https://s3.ap-south-1.amazonaws.com/cliniq-documents-mumbai/patients/CLQ-10482/25ba6abc-ef68-4412-8910-7ae70983405e.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAW6NFFFADAMEY53M6%2F20261019%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20261019T084551Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Signature=15a4c1452e6b1f1eadbb968fd59469819f3fe6420e190dc75e75c3110ea9fc1b",
+      "uploaded_by_id": "5",
+      "id": 1,
+      "created_at": "2026-10-19T08:45:51.455784",
+      "updated_at": "2026-10-19T08:45:51.455784"
+    },
+    {
+      "patient_id": "CLQ-10482",
+      "filename": "cardiac_biomarkers.pdf",
+      "file_type": "application/pdf",
+      "category": "lab",
+      "file_url": "https://s3.ap-south-1.amazonaws.com/cliniq-app-storage-2026-unique/patients/CLQ-10482/e7651a97-22b4-4fab-ac52-94ca7b36e0e9.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5X72HHDL63THVODW%2F20261020%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20261020T130634Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Signature=789b6e965424e5ab5fe6b6744eb7520fc824f6d063376bedf2fa968327bd4abf",
+      "uploaded_by_id": "5",
+      "uploaded_at": "2026-10-20T13:06:34.590189",
+      "id": 2,
+      "created_at": "2026-10-20T13:06:34.591827",
+      "updated_at": "2026-10-20T13:06:34.591827"
+    },
+    {
+      "patient_id": "CLQ-10482",
+      "filename": "cardiac_biomarkers.pdf",
+      "file_type": "application/pdf",
+      "category": "lab",
+      "file_url": "https://s3.ap-south-1.amazonaws.com/cliniq-app-storage-2026-unique/patients/CLQ-10482/b45cc86d-9da5-429e-b6c3-6026d80628bf.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIA5X72HHDL63THVODW%2F20261020%2Fap-south-1%2Fs3%2Faws4_request&X-Amz-Date=20261020T130737Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&X-Amz-Signature=de5069b8f2d589141865918a6cdea2ef57edfb9d71c0b87a5aebe1d0d0a18515",
+      "uploaded_by_id": "5",
+      "uploaded_at": "2026-10-20T13:07:37.888058",
+      "id": 3,
+      "created_at": "2026-10-20T13:07:37.890506",
+      "updated_at": "2026-10-20T13:07:37.890506"
+    }
+  ]
+}

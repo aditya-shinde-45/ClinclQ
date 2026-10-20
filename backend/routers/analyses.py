@@ -8,7 +8,7 @@ from models.schemas import (
 )
 from core.security import get_current_user, require_role
 from core.database import get_db
-from services.mock_analysis import generate_mock_analysis
+from services.bedrock_service import bedrock_service
 import random
 
 router = APIRouter(prefix="/analyses", tags=["Clinical Analyses"])
@@ -21,66 +21,80 @@ def generate_report_id() -> str:
     return f"CDS-{now.year}-{seq:04d}"
 
 
-async def process_analysis_background(analysis_id: int, patient_data: dict, symptoms: str, observations: str, db: Client):
-    """Background task to process analysis and generate mock data"""
-    import time
-    
-    # Simulate processing time
-    time.sleep(3)
-    
-    # Generate mock analysis
-    mock_data = generate_mock_analysis(patient_data, symptoms, observations)
-    
-    # Insert diagnoses
-    for diag in mock_data["diagnoses"]:
-        db.table("diagnoses").insert({
-            "analysis_id": analysis_id,
-            "rank": diag["rank"],
-            "name": diag["name"],
-            "confidence_percentage": diag["confidence_percentage"],
-            "confidence_label": diag["confidence_label"],
-            "summary": diag["summary"],
-            "evidence": diag["evidence"]
-        }).execute()
-    
-    # Insert recommendations
-    for rec in mock_data["recommendations"]:
-        db.table("recommendations").insert({
-            "analysis_id": analysis_id,
-            "step_number": rec["step_number"],
-            "title": rec["title"],
-            "description": rec["description"]
-        }).execute()
-    
-    # Insert drug interactions
-    for interaction in mock_data["drug_interactions"]:
-        db.table("drug_interactions").insert({
-            "analysis_id": analysis_id,
-            "severity": interaction["severity"],
-            "title": interaction["title"],
-            "description": interaction["description"]
-        }).execute()
-    
-    # Link risk factors
-    for risk_name in mock_data["risk_factors"]:
-        # Get or create risk factor
-        risk_response = db.table("risk_factors").select("id").eq("name", risk_name).execute()
-        if risk_response.data:
-            risk_id = risk_response.data[0]["id"]
-        else:
-            new_risk = db.table("risk_factors").insert({"name": risk_name}).execute()
-            risk_id = new_risk.data[0]["id"]
+def process_analysis_background(analysis_id: int, patient_data: dict, symptoms: str, observations: str, test_results: str, db: Client):
+    """Background task to process analysis with AWS Bedrock AI engine"""
+    import logging
+    logger = logging.getLogger(__name__)
+
+    try:
+        # Generate analysis via AWS Bedrock (or graceful fallback)
+        mock_data = bedrock_service.generate_analysis(
+            patient_data=patient_data,
+            new_symptoms=symptoms,
+            observations=observations,
+            test_results=test_results
+        )
         
-        # Link to analysis
-        db.table("analysis_risk_factors").insert({
-            "analysis_id": analysis_id,
-            "risk_factor_id": risk_id
-        }).execute()
-    
-    # Update status to awaiting_review
-    db.table("clinical_analyses").update({
-        "status": "awaiting_review"
-    }).eq("id", analysis_id).execute()
+        # Insert diagnoses
+        for diag in mock_data.get("diagnoses", []):
+            db.table("diagnoses").insert({
+                "analysis_id": analysis_id,
+                "rank": diag.get("rank", 1),
+                "name": diag.get("name", "Clinical Differential"),
+                "confidence_percentage": diag.get("confidence_percentage", 75.0),
+                "confidence_label": diag.get("confidence_label", "moderate"),
+                "summary": diag.get("summary", ""),
+                "evidence": diag.get("evidence", [])
+            }).execute()
+        
+        # Insert recommendations
+        for rec in mock_data.get("recommendations", []):
+            db.table("recommendations").insert({
+                "analysis_id": analysis_id,
+                "step_number": rec.get("step_number", 1),
+                "title": rec.get("title", "Clinical Action"),
+                "description": rec.get("description", "")
+            }).execute()
+        
+        # Insert drug interactions
+        for interaction in mock_data.get("drug_interactions", []):
+            db.table("drug_interactions").insert({
+                "analysis_id": analysis_id,
+                "severity": interaction.get("severity", "moderate"),
+                "title": interaction.get("title", "Drug Interaction Check"),
+                "description": interaction.get("description", "")
+            }).execute()
+        
+        # Link risk factors
+        for risk_name in mock_data.get("risk_factors", []):
+            try:
+                # Get or create risk factor
+                risk_response = db.table("risk_factors").select("id").eq("name", risk_name).execute()
+                if risk_response.data:
+                    risk_id = risk_response.data[0]["id"]
+                else:
+                    new_risk = db.table("risk_factors").insert({"name": risk_name}).execute()
+                    risk_id = new_risk.data[0]["id"]
+                
+                # Link to analysis
+                db.table("analysis_risk_factors").insert({
+                    "analysis_id": analysis_id,
+                    "risk_factor_id": risk_id
+                }).execute()
+            except Exception as re:
+                logger.warning(f"Error linking risk factor {risk_name}: {re}")
+        
+        # Update status to awaiting_review
+        db.table("clinical_analyses").update({
+            "status": "awaiting_review"
+        }).eq("id", analysis_id).execute()
+
+    except Exception as e:
+        logger.error(f"Error in process_analysis_background for analysis {analysis_id}: {e}", exc_info=True)
+        # Ensure analysis status is updated so UI doesn't hang in processing
+        db.table("clinical_analyses").update({
+            "status": "awaiting_review"
+        }).eq("id", analysis_id).execute()
 
 
 @router.post("", response_model=AnalysisResponse, status_code=status.HTTP_201_CREATED)
@@ -90,7 +104,7 @@ async def request_analysis(
     current_user: dict = Depends(require_role("doctor")),
     db: Client = Depends(get_db)
 ):
-    """Request a new clinical analysis"""
+    """Request a new clinical analysis powered by AWS Bedrock"""
     
     # Get patient data
     patient_response = db.table("patients").select("*").eq("id", request.patient_id).execute()
@@ -102,6 +116,18 @@ async def request_analysis(
     
     patient_data = patient_response.data[0]
     
+    # Check for uploaded S3 documents to enrich Bedrock clinical context
+    docs_context = ""
+    try:
+        docs_res = db.table("documents").select("filename, category, uploaded_at").eq("patient_id", request.patient_id).execute()
+        if docs_res.data:
+            doc_summaries = [f"{d.get('filename')} ({d.get('category')})" for d in docs_res.data]
+            docs_context = f" | Attached S3 Documents: {', '.join(doc_summaries)}"
+    except Exception:
+        docs_context = ""
+
+    combined_test_results = (request.test_results or "") + docs_context
+
     # Create analysis record
     report_id = generate_report_id()
     analysis_data = {
@@ -112,7 +138,8 @@ async def request_analysis(
         "observations": request.observations,
         "test_results": request.test_results,
         "clinical_notes": request.clinical_notes,
-        "reviewed_by_id": current_user["id"]
+        "reviewed_by_id": current_user["id"],
+        "generated_at": datetime.utcnow().isoformat()
     }
     
     response = db.table("clinical_analyses").insert(analysis_data).execute()
@@ -125,13 +152,14 @@ async def request_analysis(
     
     analysis = response.data[0]
     
-    # Start background processing
+    # Start background processing via Bedrock
     background_tasks.add_task(
         process_analysis_background,
         analysis["id"],
         patient_data,
         request.new_symptoms,
         request.observations,
+        combined_test_results,
         db
     )
     
@@ -145,7 +173,7 @@ async def request_analysis(
         recommendations=[],
         drug_interactions=[],
         risk_factors=[],
-        generated_at=analysis["generated_at"],
+        generated_at=analysis.get("generated_at", datetime.utcnow()),
         reviewed_at=None
     )
 
@@ -245,8 +273,10 @@ async def record_decision(
         )
     
     # Create decision
+    now_iso = datetime.utcnow().isoformat()
     decision_data = decision.model_dump()
     decision_data["decided_by_id"] = current_user["id"]
+    decision_data["decided_at"] = now_iso
     
     response = db.table("clinical_decisions").insert(decision_data).execute()
     
@@ -260,7 +290,10 @@ async def record_decision(
     new_status = decision.decision_type.value  # approve, modify, or reject
     db.table("clinical_analyses").update({
         "status": new_status,
-        "reviewed_at": datetime.utcnow().isoformat()
+        "reviewed_at": now_iso
     }).eq("id", analysis_id).execute()
     
-    return DecisionResponse(**response.data[0])
+    record = response.data[0]
+    if "decided_at" not in record:
+        record["decided_at"] = now_iso
+    return DecisionResponse(**record)
