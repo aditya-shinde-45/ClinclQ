@@ -157,6 +157,30 @@ export const analysesAPI = {
       body: JSON.stringify(decision)
     });
     return handleResponse(response);
+  },
+
+  triggerRagIndex: async (patientId?: string, forceReindex: boolean = false) => {
+    const response = await fetch(`${API_BASE_URL}/analyses/rag/index`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({ patient_id: patientId, force_reindex: forceReindex })
+    });
+    return handleResponse(response);
+  },
+
+  searchRag: async (patientId: string, query: string, topK: number = 4) => {
+    const response = await fetch(`${API_BASE_URL}/analyses/rag/search`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({ patient_id: patientId, query, top_k: topK })
+    });
+    return handleResponse(response);
   }
 };
 

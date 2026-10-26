@@ -306,6 +306,12 @@ class MockQueryBuilder:
         self.payload = data
         return self
 
+    def upsert(self, data: Any, on_conflict: str = None):
+        self.action = "upsert"
+        self.payload = data
+        self.on_conflict = on_conflict
+        return self
+
     def update(self, data: Any):
         self.action = "update"
         self.payload = data
@@ -358,6 +364,27 @@ class MockQueryBuilder:
         if self.action == "insert":
             inserted = self.db.insert_row(self.table_name, self.payload)
             return MockResponse(inserted if isinstance(inserted, list) else [inserted])
+
+        if self.action == "upsert":
+            payload_items = self.payload if isinstance(self.payload, list) else [self.payload]
+            conflict_col = self.on_conflict or "chunk_id"
+            res = []
+            for item in payload_items:
+                key_val = item.get(conflict_col)
+                existing_idx = None
+                if key_val is not None:
+                    for i, r in enumerate(table_data):
+                        if str(r.get(conflict_col)) == str(key_val):
+                            existing_idx = i
+                            break
+                if existing_idx is not None:
+                    table_data[existing_idx].update(item)
+                    table_data[existing_idx]["updated_at"] = datetime.utcnow().isoformat()
+                    res.append(dict(table_data[existing_idx]))
+                else:
+                    res.append(self.db.insert_single(table_data, item))
+            self.db.save()
+            return MockResponse(res)
 
         # Filter rows
         matched = []
@@ -482,7 +509,8 @@ class LocalDatabase:
             "drug_interactions": [],
             "analysis_risk_factors": [],
             "clinical_decisions": [],
-            "documents": []
+            "documents": [],
+            "patient_record_chunks": []
         }
         self.save()
 
@@ -527,3 +555,64 @@ class LocalDatabase:
 
     def table(self, table_name: str) -> MockQueryBuilder:
         return MockQueryBuilder(table_name, self)
+
+    def rpc(self, function_name: str, params: dict = None):
+        """Simulate Supabase stored procedures such as match_patient_record_chunks"""
+        class MockRpcCaller:
+            def __init__(self, db, fn_name, fn_params):
+                self.db = db
+                self.fn_name = fn_name
+                self.fn_params = fn_params or {}
+
+            def execute(self):
+                if self.fn_name == "match_patient_record_chunks":
+                    query_emb = self.fn_params.get("query_embedding", [])
+                    target_pid = str(self.fn_params.get("target_patient_id", ""))
+                    threshold = float(self.fn_params.get("match_threshold", 0.0))
+                    limit = int(self.fn_params.get("match_count", 5))
+
+                    chunks = self.db.get_table("patient_record_chunks")
+                    matched = []
+                    try:
+                        import numpy as np
+                        q_vec = np.array(query_emb, dtype=np.float32)
+                        q_norm = float(np.linalg.norm(q_vec))
+                    except Exception:
+                        q_vec = None
+                        q_norm = 0.0
+
+                    for c in chunks:
+                        if str(c.get("patient_id")) != target_pid:
+                            continue
+                        c_emb = c.get("embedding", [])
+                        if not c_emb or len(c_emb) != len(query_emb):
+                            continue
+
+                        if q_vec is not None and q_norm > 0:
+                            c_vec = np.array(c_emb, dtype=np.float32)
+                            c_norm = float(np.linalg.norm(c_vec))
+                            if c_norm > 0:
+                                sim = float(np.dot(q_vec, c_vec) / (q_norm * c_norm))
+                            else:
+                                sim = 0.0
+                        else:
+                            sim = 0.5
+
+                        if sim >= threshold:
+                            matched.append({
+                                "id": c.get("id"),
+                                "chunk_id": c.get("chunk_id"),
+                                "patient_id": c.get("patient_id"),
+                                "source_type": c.get("source_type"),
+                                "source_id": c.get("source_id"),
+                                "content": c.get("content"),
+                                "metadata": c.get("metadata", {}),
+                                "similarity": round(sim, 4)
+                            })
+
+                    matched.sort(key=lambda x: x["similarity"], reverse=True)
+                    return MockResponse(matched[:limit])
+
+                return MockResponse([])
+
+        return MockRpcCaller(self, function_name, params)

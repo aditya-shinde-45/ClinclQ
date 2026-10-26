@@ -40,9 +40,10 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint with AWS S3 and Bedrock operational status"""
+    """Health check endpoint with AWS S3, Bedrock and Embeddings operational status"""
     from services.s3_service import s3_service
     from services.bedrock_service import bedrock_service
+    from services.embedding_service import embedding_service
     
     return {
         "status": "healthy",
@@ -56,6 +57,11 @@ async def health_check():
             "bedrock": {
                 "configured": bedrock_service.is_configured,
                 "model_id": bedrock_service.model_id
+            },
+            "embeddings": {
+                "configured": embedding_service.is_configured,
+                "model_id": embedding_service.model_id,
+                "dimension": embedding_service.dimension
             }
         }
     }
@@ -66,6 +72,7 @@ async def aws_status():
     """Dedicated AWS infrastructure status endpoint"""
     from services.s3_service import s3_service
     from services.bedrock_service import bedrock_service
+    from services.embedding_service import embedding_service
 
     return {
         "region": settings.AWS_REGION,
@@ -78,6 +85,12 @@ async def aws_status():
             "status": "operational" if bedrock_service.is_configured and bedrock_service.bedrock_client else "offline",
             "model_id": bedrock_service.model_id,
             "provider": "Meta Llama 3"
+        },
+        "embeddings": {
+            "status": "operational" if embedding_service.is_configured and embedding_service.client else "offline",
+            "model_id": embedding_service.model_id,
+            "dimension": embedding_service.dimension,
+            "provider": "Amazon Titan Embeddings v2"
         }
     }
 

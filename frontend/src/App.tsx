@@ -1159,13 +1159,14 @@ function Processing({
           const updated = await analysesAPI.getById(currentAnalysis.id);
           if (
             updated.status === "awaiting_review" ||
+            updated.status === "failed" ||
             (updated.diagnoses && updated.diagnoses.length > 0) ||
-            attempts >= 8
+            attempts >= 25
           ) {
             if (isMounted) {
               setCurrentAnalysis(
-                attempts >= 8 && (!updated.diagnoses || updated.diagnoses.length === 0)
-                  ? { ...updated, status: "failed", error: "AWS Bedrock did not return a report before the request timed out." }
+                (attempts >= 25 || updated.status === "failed") && (!updated.diagnoses || updated.diagnoses.length === 0)
+                  ? { ...updated, status: "failed", error: updated.clinical_notes || "AWS Bedrock did not return a report before the request timed out." }
                   : updated
               );
               clearInterval(pollInterval);
@@ -1174,7 +1175,7 @@ function Processing({
           }
         } catch (e) {
           console.error("Error polling Bedrock analysis:", e);
-          if (attempts >= 6 && isMounted) {
+          if (attempts >= 20 && isMounted) {
             clearInterval(pollInterval);
             setCurrentAnalysis({
               ...currentAnalysis,
@@ -1345,6 +1346,7 @@ function Report({
   const displayRecommendations = currentAnalysis.recommendations || [];
   const displayInteractions = currentAnalysis.drug_interactions || [];
   const displayRiskFactors = currentAnalysis.risk_factors || [];
+  const displayEvidence = currentAnalysis.retrieved_evidence || [];
 
   const reportId = currentAnalysis?.report_id || "CDS-2026-0618";
   const formattedDate = currentAnalysis?.generated_at
@@ -1477,15 +1479,62 @@ function Report({
           <section className="report-section evidence-trail" id="citations">
             <div className="section-title">
               <div>
-                <h2>Evidence trail and citations</h2>
-                <p>Sources used to generate and calibrate this recommendation.</p>
+                <h2>Retrieved patient evidence (RAG Knowledge Source)</h2>
+                <p>
+                  Patient-specific records dynamically retrieved via Amazon Bedrock Titan Text Embeddings and pgvector.
+                </p>
               </div>
+              <Status tone="success">
+                {displayEvidence.length} {displayEvidence.length === 1 ? "Chunk Retrieved" : "Chunks Retrieved"}
+              </Status>
             </div>
-            <Timeline compact patientId={patient.id} />
-            <p className="report-disclaimer">
-              No guideline citations were returned with this analysis. Verify recommendations
-              against current clinical guidance before acting.
-            </p>
+            {displayEvidence.length > 0 ? (
+              <div className="retrieved-evidence-grid" style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "1rem" }}>
+                {displayEvidence.map((ev: any, idx: number) => {
+                  const simPct = Math.round((ev.similarity || 0) * 100);
+                  const sourceTitle = ev.metadata?.source_title || ev.metadata?.filename || ev.source_type.replace("_", " ").toUpperCase();
+                  return (
+                    <div
+                      key={ev.chunk_id || idx}
+                      className="evidence-card"
+                      style={{
+                        padding: "1rem",
+                        borderRadius: "8px",
+                        border: "1px solid var(--border, #e2e8f0)",
+                        background: "var(--surface-subtle, #f8fafc)",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                          <span style={{ fontWeight: 600, fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#0284c7" }}>
+                            [Evidence #{idx + 1}] {sourceTitle}
+                          </span>
+                          {ev.source_id && (
+                            <code style={{ fontSize: "0.75rem", background: "#e0f2fe", color: "#0369a1", padding: "0.15rem 0.4rem", borderRadius: "4px" }}>
+                              Ref: {ev.source_id}
+                            </code>
+                          )}
+                        </div>
+                        <Status tone={simPct >= 75 ? "success" : "caution"}>
+                          {simPct}% match
+                        </Status>
+                      </div>
+                      <p style={{ margin: "0.25rem 0", fontSize: "0.9rem", lineHeight: "1.4", color: "var(--text, #1e293b)" }}>
+                        {ev.content}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="report-disclaimer">
+                No prior patient record chunks met the vector similarity threshold for this query. The synthesis relied exclusively on current clinical encounter presentation.
+              </p>
+            )}
+            <div style={{ marginTop: "1.5rem" }}>
+              <h3 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "0.5rem" }}>Patient chart timeline context</h3>
+              <Timeline compact patientId={patient.id} />
+            </div>
           </section>
           <section className="report-section explanation">
             <h2>Explanation for the patient</h2>

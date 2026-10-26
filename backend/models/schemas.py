@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
@@ -217,6 +217,15 @@ class AnalysisRequest(BaseModel):
     clinical_notes: Optional[str] = None
 
 
+class RetrievedEvidenceItem(BaseModel):
+    chunk_id: str
+    source_type: str
+    source_id: Optional[str] = None
+    content: str
+    similarity: float
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class AnalysisResponse(BaseModel):
     id: int
     patient_id: str
@@ -227,6 +236,7 @@ class AnalysisResponse(BaseModel):
     drug_interactions: List[DrugInteractionResponse]
     risk_factors: List[str]
     patient_explanation: Optional[str] = None
+    retrieved_evidence: List[RetrievedEvidenceItem] = []
     generated_at: datetime
     reviewed_at: Optional[datetime] = None
 
@@ -293,3 +303,42 @@ class SystemMetrics(BaseModel):
     analyses_today: int
     knowledge_sources: int
     service_availability: float
+
+
+# RAG Ingestion & Retrieval schemas
+class IngestionRequest(BaseModel):
+    patient_id: Optional[str] = None
+    force_reindex: bool = False
+
+
+class IngestionResult(BaseModel):
+    patient_id: str
+    chunks_created: int
+    chunks_updated: int
+    chunks_unchanged: int
+    chunks_deleted: int
+    total_chunks: int
+    status: str
+    error: Optional[str] = None
+
+
+class IngestionResponse(BaseModel):
+    success: bool
+    message: str
+    indexed_patients: int
+    total_chunks_indexed: int
+    details: List[IngestionResult] = []
+
+
+class RetrievalQueryRequest(BaseModel):
+    patient_id: str
+    query: str
+    top_k: Optional[int] = 4
+    min_similarity: Optional[float] = 0.20
+
+
+class RetrievalQueryResponse(BaseModel):
+    patient_id: str
+    query: str
+    total_retrieved: int
+    results: List[RetrievedEvidenceItem]
