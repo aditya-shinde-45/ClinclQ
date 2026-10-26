@@ -131,6 +131,22 @@
       "assigned_doctor_id": 3,
       "created_at": "2026-10-19T00:43:13.058609",
       "updated_at": "2026-10-19T00:43:13.058609"
+    },
+    {
+      "full_name": "Aditya",
+      "date_of_birth": "2026-10-28",
+      "gender": "Male",
+      "contact_number": "7972873499",
+      "reason_for_visit": "Report check",
+      "medical_history": "Hypertension; stable coronary artery disease; high cholesterol",
+      "allergies": "Penicillin \u2014 severe skin rash and hives",
+      "current_medications": "Amlodipine 5 mg once daily; Atorvastatin 40 mg once daily; Aspirin 81 mg once daily",
+      "past_treatments": "Completed cardiac rehabilitation in August 2024",
+      "mrn": "MRN 78645385",
+      "assigned_doctor_id": 1,
+      "id": "CLQ-89977",
+      "created_at": "2026-10-26T02:40:31.482812",
+      "updated_at": "2026-10-26T02:40:31.482812"
     }
   ],
   "appointments": [
@@ -173,6 +189,15 @@
       "status": "scheduled",
       "created_at": "2026-10-19T00:43:13.058609",
       "updated_at": "2026-10-19T00:43:13.058609"
+    },
+    {
+      "appointment_time": "2026-10-26 09:12:00",
+      "reason": "Daily check",
+      "patient_id": "CLQ-89977",
+      "doctor_id": 1,
+      "id": 5,
+      "created_at": "2026-10-26T02:41:15.643520",
+      "updated_at": "2026-10-26T02:41:15.643520"
     }
   ],
   "visits": [
@@ -327,6 +352,54 @@
       "id": 17,
       "created_at": "2026-10-20T13:14:23.913410",
       "updated_at": "2026-10-20T13:14:23.913410"
+    },
+    {
+      "name": "High cholesterol",
+      "id": 18,
+      "created_at": "2026-10-26T02:54:45.344596",
+      "updated_at": "2026-10-26T02:54:45.344596"
+    },
+    {
+      "name": "Chronic kidney disease stage 3",
+      "id": 19,
+      "created_at": "2026-10-26T02:56:10.721192",
+      "updated_at": "2026-10-26T02:56:10.721192"
+    },
+    {
+      "name": "Hypertension (on Losartan)",
+      "id": 20,
+      "created_at": "2026-10-26T02:56:10.733034",
+      "updated_at": "2026-10-26T02:56:10.733034"
+    },
+    {
+      "name": "Unknown age (potential cardiovascular risk)",
+      "id": 21,
+      "created_at": "2026-10-26T02:56:10.744923",
+      "updated_at": "2026-10-26T02:56:10.744923"
+    },
+    {
+      "name": "Previous myocardial infarction",
+      "id": 22,
+      "created_at": "2026-10-26T03:12:20.563187",
+      "updated_at": "2026-10-26T03:12:20.563187"
+    },
+    {
+      "name": "History of coronary artery disease",
+      "id": 23,
+      "created_at": "2026-10-26T03:12:20.579212",
+      "updated_at": "2026-10-26T03:12:20.579212"
+    },
+    {
+      "name": "Hypertension (based on Lisinopril use)",
+      "id": 24,
+      "created_at": "2026-10-26T03:12:20.606606",
+      "updated_at": "2026-10-26T03:12:20.606606"
+    },
+    {
+      "name": "Post-operative cardiac complications",
+      "id": 25,
+      "created_at": "2026-10-26T03:15:06.698600",
+      "updated_at": "2026-10-26T03:15:06.698600"
     }
   ],
   "clinical_analyses": [
@@ -445,6 +518,91 @@
       "created_at": "2026-10-20T13:14:16.719363",
       "updated_at": "2026-10-20T13:16:52.363939",
       "reviewed_at": "2026-10-20T13:16:52.335205"
+    },
+    {
+      "patient_id": "CLQ-89977",
+      "report_id": "CDS-2026-8191",
+      "status": "approve",
+      "new_symptoms": "Shortness of breath on exertion for 5 days. Intermittent central chest pressure, resolving with rest.",
+      "observations": "Patient alert and oriented. No acute distress at rest. Mild bilateral ankle edema.",
+      "test_results": "ECG: normal sinus rhythm, nonspecific ST changes. Troponin pending.",
+      "clinical_notes": "Tests to perform: Troponin I, BNP, chest X-ray, repeat echocardiogram",
+      "reviewed_by_id": "1",
+      "generated_at": "2026-10-26T02:54:37.619628",
+      "id": 9,
+      "created_at": "2026-10-26T02:54:37.620608",
+      "updated_at": "2026-10-26T02:54:57.207420",
+      "reviewed_at": "2026-10-26T02:54:57.203472"
+    },
+    {
+      "patient_id": "CLQ-10496",
+      "report_id": "CDS-2026-0717",
+      "status": "awaiting_review",
+      "new_symptoms": "Shortness of breath on exertion for 5 days. Intermittent central chest pressure, resolving with rest.",
+      "observations": "Patient alert and oriented. No acute distress at rest. Mild bilateral ankle edema.",
+      "test_results": "ECG: normal sinus rhythm, nonspecific ST changes. Troponin pending.",
+      "clinical_notes": "Tests to perform: Troponin I, BNP, chest X-ray, repeat echocardiogram",
+      "reviewed_by_id": "1",
+      "generated_at": "2026-10-26T02:56:04.405445",
+      "id": 10,
+      "created_at": "2026-10-26T02:56:04.406413",
+      "updated_at": "2026-10-26T02:56:10.756014"
+    },
+    {
+      "patient_id": "CLQ-89977",
+      "report_id": "CDS-2026-8661",
+      "status": "awaiting_review",
+      "new_symptoms": "Shortness of breath on exertion for 5 days. Intermittent central chest pressure, resolving with rest.",
+      "observations": "Patient alert and oriented. No acute distress at rest. Mild bilateral ankle edema.",
+      "test_results": "ECG: normal sinus rhythm, nonspecific ST changes. Troponin pending.",
+      "clinical_notes": "Tests to perform: Troponin I, BNP, chest X-ray, repeat echocardiogram",
+      "reviewed_by_id": "1",
+      "generated_at": "2026-10-26T03:00:44.672917",
+      "id": 11,
+      "created_at": "2026-10-26T03:00:44.673972",
+      "updated_at": "2026-10-26T03:00:52.102345"
+    },
+    {
+      "patient_id": "CLQ-10491",
+      "report_id": "CDS-2026-5779",
+      "status": "awaiting_review",
+      "new_symptoms": "Shortness of breath on exertion for 5 days. Intermittent central chest pressure, resolving with rest.",
+      "observations": "Patient alert and oriented. No acute distress at rest. Mild bilateral ankle edema.",
+      "test_results": "ECG: normal sinus rhythm, nonspecific ST changes. Troponin pending.",
+      "clinical_notes": "Tests to perform: Troponin I, BNP, chest X-ray, repeat echocardiogram",
+      "reviewed_by_id": "1",
+      "generated_at": "2026-10-26T03:01:44.470832",
+      "id": 12,
+      "created_at": "2026-10-26T03:01:44.471812",
+      "updated_at": "2026-10-26T03:01:51.063321"
+    },
+    {
+      "patient_id": "CLQ-10479",
+      "report_id": "CDS-2026-1246",
+      "status": "awaiting_review",
+      "new_symptoms": "Post-operative review",
+      "observations": "Type 2 diabetes; previous MI",
+      "test_results": "",
+      "clinical_notes": "Type 2 diabetes; previous MI | Current medications: Metformin 500mg; Lisinopril 10mg\nPast treatments: CABG surgery Nov 2024\nKnown allergies: None known | Tests to perform: ",
+      "reviewed_by_id": "1",
+      "generated_at": "2026-10-26T03:12:12.628531",
+      "id": 13,
+      "created_at": "2026-10-26T03:12:12.630531",
+      "updated_at": "2026-10-26T03:12:20.621979"
+    },
+    {
+      "patient_id": "CLQ-10479",
+      "report_id": "CDS-2026-4828",
+      "status": "awaiting_review",
+      "new_symptoms": "Post-operative review",
+      "observations": "Type 2 diabetes; previous MI",
+      "test_results": "",
+      "clinical_notes": "Type 2 diabetes; previous MI | Current medications: Metformin 500mg; Lisinopril 10mg\nPast treatments: CABG surgery Nov 2024\nKnown allergies: None known | Tests to perform: ",
+      "reviewed_by_id": "1",
+      "generated_at": "2026-10-26T03:15:01.950679",
+      "id": 14,
+      "created_at": "2026-10-26T03:15:01.951645",
+      "updated_at": "2026-10-26T03:15:06.713707"
     }
   ],
   "diagnoses": [
@@ -732,6 +890,191 @@
       "id": 18,
       "created_at": "2026-10-20T13:14:23.644295",
       "updated_at": "2026-10-20T13:14:23.644295"
+    },
+    {
+      "analysis_id": 9,
+      "rank": 1,
+      "name": "Stable Angina Pectoris",
+      "confidence_percentage": 85.0,
+      "confidence_label": "high",
+      "summary": "Exertional retrosternal pressure resolving with rest, consistent with known coronary artery disease.",
+      "evidence": [
+        "Intermittent central chest pressure resolving with rest",
+        "History of coronary artery disease",
+        "ECG showing nonspecific ST changes"
+      ],
+      "id": 19,
+      "created_at": "2026-10-26T02:54:45.305856",
+      "updated_at": "2026-10-26T02:54:45.305856"
+    },
+    {
+      "analysis_id": 9,
+      "rank": 2,
+      "name": "Heart Failure with Preserved Ejection Fraction (HFpEF)",
+      "confidence_percentage": 40.0,
+      "confidence_label": "moderate",
+      "summary": "Shortness of breath on exertion and mild bilateral ankle edema may indicate diastolic dysfunction.",
+      "evidence": [
+        "Shortness of breath on exertion for 5 days",
+        "Mild bilateral ankle edema",
+        "History of hypertension"
+      ],
+      "id": 20,
+      "created_at": "2026-10-26T02:54:45.310929",
+      "updated_at": "2026-10-26T02:54:45.310929"
+    },
+    {
+      "analysis_id": 10,
+      "rank": 1,
+      "name": "Chronic Heart Failure",
+      "confidence_percentage": 85.0,
+      "confidence_label": "high",
+      "summary": "Chronic kidney disease and bilateral ankle edema suggest volume overload, contributing to shortness of breath on exertion.",
+      "evidence": [
+        "Chronic kidney disease stage 3",
+        "Bilateral ankle edema",
+        "Shortness of breath on exertion"
+      ],
+      "id": 21,
+      "created_at": "2026-10-26T02:56:10.689389",
+      "updated_at": "2026-10-26T02:56:10.689389"
+    },
+    {
+      "analysis_id": 10,
+      "rank": 2,
+      "name": "Stable Angina Pectoris",
+      "confidence_percentage": 60.0,
+      "confidence_label": "moderate",
+      "summary": "Intermittent central chest pressure resolving with rest is consistent with exertional angina.",
+      "evidence": [
+        "Intermittent central chest pressure",
+        "History of chronic kidney disease (increased cardiovascular risk)"
+      ],
+      "id": 22,
+      "created_at": "2026-10-26T02:56:10.696265",
+      "updated_at": "2026-10-26T02:56:10.696265"
+    },
+    {
+      "analysis_id": 11,
+      "rank": 1,
+      "name": "Stable Angina Pectoris",
+      "confidence_percentage": 85.0,
+      "confidence_label": "high",
+      "summary": "Exertional retrosternal pressure resolving with rest, consistent with known coronary artery disease.",
+      "evidence": [
+        "Intermittent central chest pressure",
+        "History of coronary artery disease",
+        "ECG with nonspecific ST changes"
+      ],
+      "id": 23,
+      "created_at": "2026-10-26T03:00:52.028823",
+      "updated_at": "2026-10-26T03:00:52.028823"
+    },
+    {
+      "analysis_id": 11,
+      "rank": 2,
+      "name": "Heart Failure with Preserved Ejection Fraction (HFpEF)",
+      "confidence_percentage": 40.0,
+      "confidence_label": "moderate",
+      "summary": "Shortness of breath on exertion and mild bilateral ankle edema may indicate diastolic dysfunction.",
+      "evidence": [
+        "Shortness of breath on exertion",
+        "Mild bilateral ankle edema",
+        "History of hypertension"
+      ],
+      "id": 24,
+      "created_at": "2026-10-26T03:00:52.036599",
+      "updated_at": "2026-10-26T03:00:52.036599"
+    },
+    {
+      "analysis_id": 12,
+      "rank": 1,
+      "name": "Stable Angina Pectoris",
+      "confidence_percentage": 85.0,
+      "confidence_label": "high",
+      "summary": "Exertional retrosternal pressure resolving with rest, consistent with myocardial oxygen demand-supply mismatch.",
+      "evidence": [
+        "Intermittent central chest pressure resolving with rest",
+        "ECG shows nonspecific ST changes"
+      ],
+      "id": 25,
+      "created_at": "2026-10-26T03:01:51.003162",
+      "updated_at": "2026-10-26T03:01:51.003162"
+    },
+    {
+      "analysis_id": 12,
+      "rank": 2,
+      "name": "Hypothyroidism Exacerbation",
+      "confidence_percentage": 40.0,
+      "confidence_label": "moderate",
+      "summary": "Undiagnosed hypothyroidism exacerbation may contribute to fatigue and shortness of breath.",
+      "evidence": [
+        "History of hypothyroidism",
+        "Current symptoms may be related to undertreatment"
+      ],
+      "id": 26,
+      "created_at": "2026-10-26T03:01:51.010503",
+      "updated_at": "2026-10-26T03:01:51.010503"
+    },
+    {
+      "analysis_id": 13,
+      "rank": 1,
+      "name": "Post-CABG Surgery Recovery",
+      "confidence_percentage": 90.0,
+      "confidence_label": "high",
+      "summary": "Monitoring for potential complications and optimizing medical therapy after coronary artery bypass grafting.",
+      "evidence": [
+        "Past CABG surgery in Nov 2024",
+        "Current medications: Metformin 500mg; Lisinopril 10mg"
+      ],
+      "id": 27,
+      "created_at": "2026-10-26T03:12:20.506161",
+      "updated_at": "2026-10-26T03:12:20.506161"
+    },
+    {
+      "analysis_id": 13,
+      "rank": 2,
+      "name": "Type 2 Diabetes Mellitus",
+      "confidence_percentage": 80.0,
+      "confidence_label": "high",
+      "summary": "Ongoing management of blood glucose levels and cardiovascular risk factors.",
+      "evidence": [
+        "Medical history: Type 2 diabetes",
+        "Current medication: Metformin 500mg"
+      ],
+      "id": 28,
+      "created_at": "2026-10-26T03:12:20.514752",
+      "updated_at": "2026-10-26T03:12:20.514752"
+    },
+    {
+      "analysis_id": 13,
+      "rank": 3,
+      "name": "Post-Myocardial Infarction Care",
+      "confidence_percentage": 70.0,
+      "confidence_label": "moderate",
+      "summary": "Optimizing secondary prevention strategies and monitoring for cardiovascular risk factors.",
+      "evidence": [
+        "Medical history: previous MI",
+        "Current medication: Lisinopril 10mg"
+      ],
+      "id": 29,
+      "created_at": "2026-10-26T03:12:20.522513",
+      "updated_at": "2026-10-26T03:12:20.522513"
+    },
+    {
+      "analysis_id": 14,
+      "rank": 1,
+      "name": "Post-CABG Surgery Recovery",
+      "confidence_percentage": 92.0,
+      "confidence_label": "high",
+      "summary": "Monitoring for potential complications and optimizing medical therapy after coronary artery bypass grafting.",
+      "evidence": [
+        "Past CABG surgery in Nov 2024",
+        "Current medications: Metformin 500mg; Lisinopril 10mg"
+      ],
+      "id": 30,
+      "created_at": "2026-10-26T03:15:06.647650",
+      "updated_at": "2026-10-26T03:15:06.647650"
     }
   ],
   "recommendations": [
@@ -932,6 +1275,168 @@
       "id": 22,
       "created_at": "2026-10-20T13:14:23.740797",
       "updated_at": "2026-10-20T13:14:23.740797"
+    },
+    {
+      "analysis_id": 9,
+      "step_number": 1,
+      "title": "Complete serial high-sensitivity Troponin testing",
+      "description": "Rule out acute myocardial necrosis (0h and 2h delta protocol per AHA/ACC).",
+      "id": 23,
+      "created_at": "2026-10-26T02:54:45.315341",
+      "updated_at": "2026-10-26T02:54:45.315341"
+    },
+    {
+      "analysis_id": 9,
+      "step_number": 2,
+      "title": "Optimize hypertension management",
+      "description": "Ensure blood pressure control to reduce cardiac workload and alleviate symptoms.",
+      "id": 24,
+      "created_at": "2026-10-26T02:54:45.320084",
+      "updated_at": "2026-10-26T02:54:45.320084"
+    },
+    {
+      "analysis_id": 9,
+      "step_number": 3,
+      "title": "Echocardiogram to assess left ventricular function",
+      "description": "Evaluate for signs of diastolic dysfunction or cardiac remodeling.",
+      "id": 25,
+      "created_at": "2026-10-26T02:54:45.324204",
+      "updated_at": "2026-10-26T02:54:45.324204"
+    },
+    {
+      "analysis_id": 10,
+      "step_number": 1,
+      "title": "Complete serial high-sensitivity Troponin testing",
+      "description": "Rule out acute myocardial necrosis (0h and 2h delta protocol per AHA/ACC).",
+      "id": 26,
+      "created_at": "2026-10-26T02:56:10.702609",
+      "updated_at": "2026-10-26T02:56:10.702609"
+    },
+    {
+      "analysis_id": 10,
+      "step_number": 2,
+      "title": "Echocardiogram",
+      "description": "Assess left ventricular function and potential valvular disease.",
+      "id": 27,
+      "created_at": "2026-10-26T02:56:10.709092",
+      "updated_at": "2026-10-26T02:56:10.709092"
+    },
+    {
+      "analysis_id": 10,
+      "step_number": 3,
+      "title": "Optimize volume management",
+      "description": "Adjust diuretic therapy and monitor for signs of volume overload.",
+      "id": 28,
+      "created_at": "2026-10-26T02:56:10.714804",
+      "updated_at": "2026-10-26T02:56:10.714804"
+    },
+    {
+      "analysis_id": 11,
+      "step_number": 1,
+      "title": "Complete serial high-sensitivity Troponin testing",
+      "description": "Rule out acute myocardial necrosis (0h and 2h delta protocol per AHA/ACC).",
+      "id": 29,
+      "created_at": "2026-10-26T03:00:52.043461",
+      "updated_at": "2026-10-26T03:00:52.043461"
+    },
+    {
+      "analysis_id": 11,
+      "step_number": 2,
+      "title": "Echocardiogram with Doppler studies",
+      "description": "Assess left ventricular function and diastolic dysfunction (per AHA/ACC and ESC guidelines).",
+      "id": 30,
+      "created_at": "2026-10-26T03:00:52.050357",
+      "updated_at": "2026-10-26T03:00:52.050357"
+    },
+    {
+      "analysis_id": 11,
+      "step_number": 3,
+      "title": "Optimize hypertension and lipid management",
+      "description": "Ensure blood pressure and lipid profiles are within target ranges to reduce cardiovascular risk.",
+      "id": 31,
+      "created_at": "2026-10-26T03:00:52.057270",
+      "updated_at": "2026-10-26T03:00:52.057270"
+    },
+    {
+      "analysis_id": 12,
+      "step_number": 1,
+      "title": "Complete serial high-sensitivity Troponin testing",
+      "description": "Rule out acute myocardial necrosis (0h and 2h delta protocol per AHA/ACC).",
+      "id": 32,
+      "created_at": "2026-10-26T03:01:51.018161",
+      "updated_at": "2026-10-26T03:01:51.018161"
+    },
+    {
+      "analysis_id": 12,
+      "step_number": 2,
+      "title": "Echocardiogram",
+      "description": "Assess left ventricular function and rule out underlying structural heart disease.",
+      "id": 33,
+      "created_at": "2026-10-26T03:01:51.025173",
+      "updated_at": "2026-10-26T03:01:51.025173"
+    },
+    {
+      "analysis_id": 12,
+      "step_number": 3,
+      "title": "Optimize Levothyroxine therapy",
+      "description": "Reassess thyroid function and adjust medication as needed to prevent exacerbation of hypothyroidism.",
+      "id": 34,
+      "created_at": "2026-10-26T03:01:51.032545",
+      "updated_at": "2026-10-26T03:01:51.032545"
+    },
+    {
+      "analysis_id": 13,
+      "step_number": 1,
+      "title": "Optimize Medication Adherence",
+      "description": "Ensure patient understanding and compliance with current medications (Metformin 500mg; Lisinopril 10mg) and monitor for potential side effects.",
+      "id": 35,
+      "created_at": "2026-10-26T03:12:20.529803",
+      "updated_at": "2026-10-26T03:12:20.529803"
+    },
+    {
+      "analysis_id": 13,
+      "step_number": 2,
+      "title": "Schedule Follow-up Appointments",
+      "description": "Arrange for regular follow-up visits to monitor post-operative recovery, blood glucose control, and cardiovascular risk factors.",
+      "id": 36,
+      "created_at": "2026-10-26T03:12:20.537408",
+      "updated_at": "2026-10-26T03:12:20.537408"
+    },
+    {
+      "analysis_id": 13,
+      "step_number": 3,
+      "title": "Consider Cardiac Rehabilitation Program",
+      "description": "Discuss the benefits of a cardiac rehabilitation program with the patient to improve cardiovascular outcomes and reduce readmission rates.",
+      "id": 37,
+      "created_at": "2026-10-26T03:12:20.545559",
+      "updated_at": "2026-10-26T03:12:20.545559"
+    },
+    {
+      "analysis_id": 14,
+      "step_number": 1,
+      "title": "Optimize Diabetes Management",
+      "description": "Adjust Metformin dosage as needed to achieve optimal glycemic control (AACE guidelines).",
+      "id": 38,
+      "created_at": "2026-10-26T03:15:06.656242",
+      "updated_at": "2026-10-26T03:15:06.656242"
+    },
+    {
+      "analysis_id": 14,
+      "step_number": 2,
+      "title": "Monitor for Cardiac Complications",
+      "description": "Regularly assess for signs of cardiac decompensation, arrhythmias, or wound infections.",
+      "id": 39,
+      "created_at": "2026-10-26T03:15:06.664102",
+      "updated_at": "2026-10-26T03:15:06.664102"
+    },
+    {
+      "analysis_id": 14,
+      "step_number": 3,
+      "title": "Lipid Profile and Liver Function Tests",
+      "description": "Schedule lipid profile and LFTs to monitor for potential statin-related side effects.",
+      "id": 40,
+      "created_at": "2026-10-26T03:15:06.671371",
+      "updated_at": "2026-10-26T03:15:06.671371"
     }
   ],
   "drug_interactions": [
@@ -979,6 +1484,24 @@
       "id": 5,
       "created_at": "2026-10-20T13:08:16.519898",
       "updated_at": "2026-10-20T13:08:16.519898"
+    },
+    {
+      "analysis_id": 9,
+      "severity": "critical",
+      "title": "Avoid Clarithromycin with current Atorvastatin",
+      "description": "CYP3A4 inhibition increases statin exposure and risk of rhabdomyolysis.",
+      "id": 6,
+      "created_at": "2026-10-26T02:54:45.329020",
+      "updated_at": "2026-10-26T02:54:45.329020"
+    },
+    {
+      "analysis_id": 11,
+      "severity": "moderate",
+      "title": "Monitor for increased risk of myopathy with Atorvastatin and concurrent medications",
+      "description": "Closely monitor for signs of myopathy, especially with concurrent use of Amlodipine and Aspirin.",
+      "id": 7,
+      "created_at": "2026-10-26T03:00:52.063092",
+      "updated_at": "2026-10-26T03:00:52.063092"
     }
   ],
   "analysis_risk_factors": [
@@ -1184,6 +1707,174 @@
       "id": 29,
       "created_at": "2026-10-20T13:14:23.944308",
       "updated_at": "2026-10-20T13:14:23.944308"
+    },
+    {
+      "analysis_id": 9,
+      "risk_factor_id": 1,
+      "id": 30,
+      "created_at": "2026-10-26T02:54:45.334152",
+      "updated_at": "2026-10-26T02:54:45.334152"
+    },
+    {
+      "analysis_id": 9,
+      "risk_factor_id": 2,
+      "id": 31,
+      "created_at": "2026-10-26T02:54:45.339850",
+      "updated_at": "2026-10-26T02:54:45.339850"
+    },
+    {
+      "analysis_id": 9,
+      "risk_factor_id": 18,
+      "id": 32,
+      "created_at": "2026-10-26T02:54:45.349540",
+      "updated_at": "2026-10-26T02:54:45.349540"
+    },
+    {
+      "analysis_id": 9,
+      "risk_factor_id": 13,
+      "id": 33,
+      "created_at": "2026-10-26T02:54:45.355126",
+      "updated_at": "2026-10-26T02:54:45.355126"
+    },
+    {
+      "analysis_id": 9,
+      "risk_factor_id": 14,
+      "id": 34,
+      "created_at": "2026-10-26T02:54:45.360858",
+      "updated_at": "2026-10-26T02:54:45.360858"
+    },
+    {
+      "analysis_id": 10,
+      "risk_factor_id": 19,
+      "id": 35,
+      "created_at": "2026-10-26T02:56:10.726717",
+      "updated_at": "2026-10-26T02:56:10.726717"
+    },
+    {
+      "analysis_id": 10,
+      "risk_factor_id": 20,
+      "id": 36,
+      "created_at": "2026-10-26T02:56:10.738513",
+      "updated_at": "2026-10-26T02:56:10.738513"
+    },
+    {
+      "analysis_id": 10,
+      "risk_factor_id": 21,
+      "id": 37,
+      "created_at": "2026-10-26T02:56:10.750904",
+      "updated_at": "2026-10-26T02:56:10.750904"
+    },
+    {
+      "analysis_id": 11,
+      "risk_factor_id": 1,
+      "id": 38,
+      "created_at": "2026-10-26T03:00:52.069792",
+      "updated_at": "2026-10-26T03:00:52.069792"
+    },
+    {
+      "analysis_id": 11,
+      "risk_factor_id": 2,
+      "id": 39,
+      "created_at": "2026-10-26T03:00:52.076708",
+      "updated_at": "2026-10-26T03:00:52.076708"
+    },
+    {
+      "analysis_id": 11,
+      "risk_factor_id": 18,
+      "id": 40,
+      "created_at": "2026-10-26T03:00:52.083333",
+      "updated_at": "2026-10-26T03:00:52.083333"
+    },
+    {
+      "analysis_id": 11,
+      "risk_factor_id": 13,
+      "id": 41,
+      "created_at": "2026-10-26T03:00:52.089923",
+      "updated_at": "2026-10-26T03:00:52.089923"
+    },
+    {
+      "analysis_id": 11,
+      "risk_factor_id": 14,
+      "id": 42,
+      "created_at": "2026-10-26T03:00:52.097595",
+      "updated_at": "2026-10-26T03:00:52.097595"
+    },
+    {
+      "analysis_id": 12,
+      "risk_factor_id": 15,
+      "id": 43,
+      "created_at": "2026-10-26T03:01:51.040642",
+      "updated_at": "2026-10-26T03:01:51.040642"
+    },
+    {
+      "analysis_id": 12,
+      "risk_factor_id": 16,
+      "id": 44,
+      "created_at": "2026-10-26T03:01:51.048849",
+      "updated_at": "2026-10-26T03:01:51.048849"
+    },
+    {
+      "analysis_id": 12,
+      "risk_factor_id": 17,
+      "id": 45,
+      "created_at": "2026-10-26T03:01:51.056714",
+      "updated_at": "2026-10-26T03:01:51.056714"
+    },
+    {
+      "analysis_id": 13,
+      "risk_factor_id": 5,
+      "id": 46,
+      "created_at": "2026-10-26T03:12:20.554607",
+      "updated_at": "2026-10-26T03:12:20.554607"
+    },
+    {
+      "analysis_id": 13,
+      "risk_factor_id": 22,
+      "id": 47,
+      "created_at": "2026-10-26T03:12:20.570636",
+      "updated_at": "2026-10-26T03:12:20.570636"
+    },
+    {
+      "analysis_id": 13,
+      "risk_factor_id": 23,
+      "id": 48,
+      "created_at": "2026-10-26T03:12:20.587781",
+      "updated_at": "2026-10-26T03:12:20.587781"
+    },
+    {
+      "analysis_id": 13,
+      "risk_factor_id": 13,
+      "id": 49,
+      "created_at": "2026-10-26T03:12:20.597347",
+      "updated_at": "2026-10-26T03:12:20.597347"
+    },
+    {
+      "analysis_id": 13,
+      "risk_factor_id": 24,
+      "id": 50,
+      "created_at": "2026-10-26T03:12:20.614804",
+      "updated_at": "2026-10-26T03:12:20.614804"
+    },
+    {
+      "analysis_id": 14,
+      "risk_factor_id": 5,
+      "id": 51,
+      "created_at": "2026-10-26T03:15:06.679551",
+      "updated_at": "2026-10-26T03:15:06.679551"
+    },
+    {
+      "analysis_id": 14,
+      "risk_factor_id": 6,
+      "id": 52,
+      "created_at": "2026-10-26T03:15:06.689292",
+      "updated_at": "2026-10-26T03:15:06.689292"
+    },
+    {
+      "analysis_id": 14,
+      "risk_factor_id": 25,
+      "id": 53,
+      "created_at": "2026-10-26T03:15:06.707277",
+      "updated_at": "2026-10-26T03:15:06.707277"
     }
   ],
   "clinical_decisions": [
@@ -1240,6 +1931,17 @@
       "id": 5,
       "created_at": "2026-10-20T13:16:52.337206",
       "updated_at": "2026-10-20T13:16:52.337206"
+    },
+    {
+      "analysis_id": 9,
+      "decision_type": "approve",
+      "clinician_notes": "",
+      "attestation_confirmed": true,
+      "decided_by_id": "1",
+      "decided_at": "2026-10-26T02:54:57.203472",
+      "id": 6,
+      "created_at": "2026-10-26T02:54:57.204522",
+      "updated_at": "2026-10-26T02:54:57.204522"
     }
   ],
   "documents": [

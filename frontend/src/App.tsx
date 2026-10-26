@@ -919,9 +919,9 @@ function PatientChart({ navigate, currentPatient, role = "Doctor" }: { navigate:
               <h2>Medical history</h2>
               <dl className="fact-list">
                 <div><dt>Active conditions</dt><dd>{currentPatient.medical_history || 'No active conditions recorded'}</dd></div>
-                <div><dt>Current medications</dt><dd>{currentPatient.medications || 'No medications recorded'}</dd></div>
+                <div><dt>Current medications</dt><dd>{currentPatient.current_medications || 'No medications recorded'}</dd></div>
                 <div><dt>Past diagnoses</dt><dd>{currentPatient.past_diagnosis || 'None'}</dd></div>
-                <div><dt>Past treatments</dt><dd>{currentPatient.past_treatment || 'None'}</dd></div>
+                <div><dt>Past treatments</dt><dd>{currentPatient.past_treatments || 'None'}</dd></div>
               </dl>
             </section>
             <section>
@@ -962,23 +962,42 @@ function AddInfo({
     age: 58,
     gender: "Female",
   };
-  const [symptoms, setSymptoms] = useState(
-    "Shortness of breath on exertion for 5 days. Intermittent central chest pressure, resolving with rest."
-  );
-  const [observations, setObservations] = useState(
-    "Patient alert and oriented. No acute distress at rest. Mild bilateral ankle edema."
-  );
+  const [symptoms, setSymptoms] = useState(patient.reason_for_visit || "");
+  const [observations, setObservations] = useState("");
   const [impression, setImpression] = useState("");
-  const [testResults, setTestResults] = useState(
-    "ECG: normal sinus rhythm, nonspecific ST changes. Troponin pending."
-  );
+  const [testResults, setTestResults] = useState("");
   const [allergies, setAllergies] = useState("");
-  const [testsToPerform, setTestsToPerform] = useState(
-    "Troponin I, BNP, chest X-ray, repeat echocardiogram"
+  const [testsToPerform, setTestsToPerform] = useState("");
+  const [notes, setNotes] = useState(
+    [
+      patient.current_medications
+        ? `Current medications: ${patient.current_medications}`
+        : "",
+      patient.past_treatments ? `Past treatments: ${patient.past_treatments}` : "",
+      patient.allergies ? `Known allergies: ${patient.allergies}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n")
   );
-  const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    setSymptoms(patient.reason_for_visit || "");
+    setObservations("");
+    setImpression("");
+    setNotes(
+      [
+        patient.current_medications
+          ? `Current medications: ${patient.current_medications}`
+          : "",
+        patient.past_treatments ? `Past treatments: ${patient.past_treatments}` : "",
+        patient.allergies ? `Known allergies: ${patient.allergies}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n")
+    );
+  }, [patient.id]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -1144,7 +1163,11 @@ function Processing({
             attempts >= 8
           ) {
             if (isMounted) {
-              setCurrentAnalysis(updated);
+              setCurrentAnalysis(
+                attempts >= 8 && (!updated.diagnoses || updated.diagnoses.length === 0)
+                  ? { ...updated, status: "failed", error: "AWS Bedrock did not return a report before the request timed out." }
+                  : updated
+              );
               clearInterval(pollInterval);
               navigate("report");
             }
@@ -1153,6 +1176,11 @@ function Processing({
           console.error("Error polling Bedrock analysis:", e);
           if (attempts >= 6 && isMounted) {
             clearInterval(pollInterval);
+            setCurrentAnalysis({
+              ...currentAnalysis,
+              status: "failed",
+              error: "Unable to retrieve the AWS Bedrock report. Check the backend logs and try again.",
+            });
             navigate("report");
           }
         }
@@ -1208,48 +1236,6 @@ function Processing({
   );
 }
 
-const fallbackDiagnoses = [
-  {
-    name: "Stable angina",
-    confidence: "78% confidence",
-    tone: "success" as const,
-    label: "High confidence",
-    summary:
-      "Exertional chest pressure resolving with rest is consistent with chronic coronary syndrome.",
-    evidence: [
-      "Known coronary artery disease",
-      "Symptoms are exertional and resolve with rest",
-      "Nonspecific ST changes without acute ischemic pattern",
-    ],
-  },
-  {
-    name: "Heart failure exacerbation",
-    confidence: "64% confidence",
-    tone: "caution" as const,
-    label: "Needs review",
-    summary:
-      "Dyspnea and peripheral edema may indicate early volume overload; BNP and imaging are pending.",
-    evidence: [
-      "Dyspnea on exertion",
-      "Mild bilateral ankle edema",
-      "Previous ejection fraction 52%",
-    ],
-  },
-  {
-    name: "Symptomatic anemia",
-    confidence: "41% confidence",
-    tone: "caution" as const,
-    label: "Needs review",
-    summary:
-      "Prior iron-deficiency anemia could contribute to dyspnea; current blood count is not available.",
-    evidence: [
-      "History of iron-deficiency anemia",
-      "Hemoglobin 11.2 g/dL in February",
-      "Fatigue reported during exertion",
-    ],
-  },
-];
-
 function Report({
   navigate,
   currentPatient,
@@ -1274,6 +1260,27 @@ function Report({
   const [clinicianNotes, setClinicianNotes] = useState("");
   const [attestation, setAttestation] = useState(true);
   const [savingDecision, setSavingDecision] = useState(false);
+
+  if (
+    !currentAnalysis?.id ||
+    currentAnalysis.status === "failed" ||
+    !currentAnalysis.diagnoses?.length
+  ) {
+    return (
+      <ClinicalShell view="report" navigate={navigate} currentPatient={patient}>
+        <main className="page">
+          <div className="empty-state">
+            <strong>No AI-generated report is available</strong>
+            <p>
+              {currentAnalysis?.error ||
+                "Request a new clinical analysis and wait for AWS Bedrock processing to complete."}
+            </p>
+            <Button onClick={() => navigate("add-info")}>Request clinical analysis</Button>
+          </div>
+        </main>
+      </ClinicalShell>
+    );
+  }
 
   const toggle = (index: number) =>
     setExpanded((current) =>
@@ -1324,63 +1331,20 @@ function Report({
     navigate("confirmation");
   };
 
-  const displayDiagnoses =
-    currentAnalysis?.diagnoses && currentAnalysis.diagnoses.length > 0
-      ? currentAnalysis.diagnoses.map((d: any) => ({
-          name: d.name,
-          confidence: `${Math.round(d.confidence_percentage)}% confidence`,
-          tone:
-            d.confidence_label === "high" || d.confidence_percentage >= 70
-              ? ("success" as const)
-              : ("caution" as const),
-          label: d.confidence_label === "high" ? "High confidence" : "Needs review",
-          summary: d.summary,
-          evidence: Array.isArray(d.evidence) ? d.evidence : [d.evidence],
-        }))
-      : fallbackDiagnoses;
-
-  const displayRecommendations =
-    currentAnalysis?.recommendations && currentAnalysis.recommendations.length > 0
-      ? currentAnalysis.recommendations
-      : [
-          {
-            step_number: 1,
-            title: "Complete serial high-sensitivity troponin testing",
-            description: "Exclude acute myocardial injury before outpatient management.",
-          },
-          {
-            step_number: 2,
-            title: "Obtain BNP and chest radiograph",
-            description: "Assess possible volume overload given dyspnea and peripheral edema.",
-          },
-          {
-            step_number: 3,
-            title: "Continue current aspirin and statin therapy",
-            description: "Review antianginal optimization after acute causes are excluded.",
-          },
-        ];
-
-  const displayInteractions =
-    currentAnalysis?.drug_interactions && currentAnalysis.drug_interactions.length > 0
-      ? currentAnalysis.drug_interactions
-      : [
-          {
-            severity: "critical",
-            title: "Avoid adding clarithromycin with current atorvastatin 40 mg",
-            description:
-              "Concurrent use can substantially increase atorvastatin exposure and risk of myopathy. Choose an alternative antibiotic or temporarily withhold atorvastatin under clinician guidance.",
-          },
-        ];
-
-  const displayRiskFactors =
-    currentAnalysis?.risk_factors && currentAnalysis.risk_factors.length > 0
-      ? currentAnalysis.risk_factors
-      : [
-          "Known coronary artery disease",
-          "Hypertension",
-          "Hyperlipidemia",
-          "Age over 55",
-        ];
+  const displayDiagnoses = (currentAnalysis.diagnoses || []).map((d: any) => ({
+    name: d.name,
+    confidence: `${Math.round(d.confidence_percentage)}% confidence`,
+    tone:
+      d.confidence_label === "high" || d.confidence_percentage >= 70
+        ? ("success" as const)
+        : ("caution" as const),
+    label: d.confidence_label === "high" ? "High confidence" : "Needs review",
+    summary: d.summary,
+    evidence: Array.isArray(d.evidence) ? d.evidence : [d.evidence],
+  }));
+  const displayRecommendations = currentAnalysis.recommendations || [];
+  const displayInteractions = currentAnalysis.drug_interactions || [];
+  const displayRiskFactors = currentAnalysis.risk_factors || [];
 
   const reportId = currentAnalysis?.report_id || "CDS-2026-0618";
   const formattedDate = currentAnalysis?.generated_at
@@ -1464,9 +1428,6 @@ function Report({
                           <li key={i}>{item}</li>
                         ))}
                       </ul>
-                      <a href="#citations">
-                        Guideline evidence <span>ACC/AHA 2023, sections 4.1–4.3</span>
-                      </a>
                     </div>
                   )}
                 </div>
@@ -1521,21 +1482,16 @@ function Report({
               </div>
             </div>
             <Timeline compact patientId={patient.id} />
-            <ol className="citations">
-              <li>
-                <strong>2023 AHA/ACC Guideline for Chronic Coronary Disease.</strong>
-                <span>Circulation. 2023;148:e9–e119. Sections 4.1–4.3.</span>
-              </li>
-              <li>
-                <strong>2022 AHA/ACC/HFSA Guideline for the Management of Heart Failure.</strong>
-                <span>Circulation. 2022;145:e895–e1032.</span>
-              </li>
-            </ol>
+            <p className="report-disclaimer">
+              No guideline citations were returned with this analysis. Verify recommendations
+              against current clinical guidance before acting.
+            </p>
           </section>
           <section className="report-section explanation">
             <h2>Explanation for the patient</h2>
             <p>
-              Your symptoms may be related to reduced blood flow to the heart during activity. The care team recommends blood tests and a chest X-ray to rule out urgent problems and check whether fluid buildup is contributing to shortness of breath. Your doctor will review every result and decide what treatment is appropriate.
+              {currentAnalysis.patient_explanation ||
+                "A patient explanation was not returned by AWS Bedrock. Your clinician should review the findings and explain the plan before treatment."}
             </p>
           </section>
         </div>

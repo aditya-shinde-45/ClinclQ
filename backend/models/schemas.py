@@ -226,6 +226,7 @@ class AnalysisResponse(BaseModel):
     recommendations: List[RecommendationResponse]
     drug_interactions: List[DrugInteractionResponse]
     risk_factors: List[str]
+    patient_explanation: Optional[str] = None
     generated_at: datetime
     reviewed_at: Optional[datetime] = None
 

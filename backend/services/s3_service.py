@@ -80,4 +80,12 @@ class S3Service:
                 return False
         return True
 
+    def download_file(self, s3_key: str) -> bytes:
+        """Download an uploaded document for server-side clinical processing."""
+        if not self.is_configured or not self.s3_client or s3_key.startswith("local/"):
+            raise RuntimeError("Uploaded document is not available in AWS S3")
+
+        response = self.s3_client.get_object(Bucket=self.bucket, Key=s3_key)
+        return response["Body"].read()
+
 s3_service = S3Service()

@@ -84,6 +84,7 @@ CREATE TABLE clinical_analyses (
     observations TEXT,
     test_results TEXT,
     clinical_notes TEXT,
+    patient_explanation TEXT,
     generated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     reviewed_at TIMESTAMP WITH TIME ZONE,
     reviewed_by_id INTEGER REFERENCES users(id) ON DELETE SET NULL

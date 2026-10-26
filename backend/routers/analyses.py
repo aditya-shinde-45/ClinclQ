@@ -9,7 +9,10 @@ from models.schemas import (
 from core.security import get_current_user, require_role
 from core.database import get_db
 from services.bedrock_service import bedrock_service
+from services.s3_service import s3_service
 import random
+import io
+import json
 
 router = APIRouter(prefix="/analyses", tags=["Clinical Analyses"])
 
@@ -21,22 +24,57 @@ def generate_report_id() -> str:
     return f"CDS-{now.year}-{seq:04d}"
 
 
-def process_analysis_background(analysis_id: int, patient_data: dict, symptoms: str, observations: str, test_results: str, db: Client):
+def extract_document_context(document: dict) -> str:
+    """Extract text from supported uploaded documents for the Bedrock prompt."""
+    file_url = document.get("file_url", "")
+    filename = document.get("filename", "uploaded document")
+    if "patients/" not in file_url:
+        return f"{filename}: file content is unavailable for analysis."
+
+    s3_key = "patients/" + file_url.split("patients/", 1)[1].split("?", 1)[0]
+    try:
+        content = s3_service.download_file(s3_key)
+        extension = filename.lower().rsplit(".", 1)[-1] if "." in filename else ""
+        if extension == "pdf":
+            from pypdf import PdfReader
+            text = "\n".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(content)).pages)
+        elif extension in {"txt", "csv", "json"}:
+            text = content.decode("utf-8", errors="replace")
+            if extension == "json":
+                text = json.dumps(json.loads(text), indent=2)
+        else:
+            return f"{filename}: image or unsupported file format; file contents were not analyzed."
+        cleaned = " ".join(text.split())
+        return f"{filename} ({document.get('category', 'document')}): {cleaned[:8000] or 'No readable text found.'}"
+    except Exception as exc:
+        return f"{filename}: document text could not be extracted ({exc})."
+
+
+def process_analysis_background(
+    analysis_id: int,
+    patient_data: dict,
+    symptoms: str,
+    observations: str,
+    test_results: str,
+    clinical_notes: str,
+    db: Client,
+):
     """Background task to process analysis with AWS Bedrock AI engine"""
     import logging
     logger = logging.getLogger(__name__)
 
     try:
-        # Generate analysis via AWS Bedrock (or graceful fallback)
-        mock_data = bedrock_service.generate_analysis(
+        # Generate analysis via AWS Bedrock
+        analysis_data = bedrock_service.generate_analysis(
             patient_data=patient_data,
             new_symptoms=symptoms,
             observations=observations,
-            test_results=test_results
+            test_results=test_results,
+            clinical_notes=clinical_notes,
         )
         
         # Insert diagnoses
-        for diag in mock_data.get("diagnoses", []):
+        for diag in analysis_data.get("diagnoses", []):
             db.table("diagnoses").insert({
                 "analysis_id": analysis_id,
                 "rank": diag.get("rank", 1),
@@ -48,7 +86,7 @@ def process_analysis_background(analysis_id: int, patient_data: dict, symptoms: 
             }).execute()
         
         # Insert recommendations
-        for rec in mock_data.get("recommendations", []):
+        for rec in analysis_data.get("recommendations", []):
             db.table("recommendations").insert({
                 "analysis_id": analysis_id,
                 "step_number": rec.get("step_number", 1),
@@ -57,7 +95,7 @@ def process_analysis_background(analysis_id: int, patient_data: dict, symptoms: 
             }).execute()
         
         # Insert drug interactions
-        for interaction in mock_data.get("drug_interactions", []):
+        for interaction in analysis_data.get("drug_interactions", []):
             db.table("drug_interactions").insert({
                 "analysis_id": analysis_id,
                 "severity": interaction.get("severity", "moderate"),
@@ -66,7 +104,7 @@ def process_analysis_background(analysis_id: int, patient_data: dict, symptoms: 
             }).execute()
         
         # Link risk factors
-        for risk_name in mock_data.get("risk_factors", []):
+        for risk_name in analysis_data.get("risk_factors", []):
             try:
                 # Get or create risk factor
                 risk_response = db.table("risk_factors").select("id").eq("name", risk_name).execute()
@@ -83,6 +121,10 @@ def process_analysis_background(analysis_id: int, patient_data: dict, symptoms: 
                 }).execute()
             except Exception as re:
                 logger.warning(f"Error linking risk factor {risk_name}: {re}")
+
+        db.table("clinical_analyses").update({
+            "patient_explanation": analysis_data["patient_explanation"]
+        }).eq("id", analysis_id).execute()
         
         # Update status to awaiting_review
         db.table("clinical_analyses").update({
@@ -91,10 +133,6 @@ def process_analysis_background(analysis_id: int, patient_data: dict, symptoms: 
 
     except Exception as e:
         logger.error(f"Error in process_analysis_background for analysis {analysis_id}: {e}", exc_info=True)
-        # Ensure analysis status is updated so UI doesn't hang in processing
-        db.table("clinical_analyses").update({
-            "status": "awaiting_review"
-        }).eq("id", analysis_id).execute()
 
 
 @router.post("", response_model=AnalysisResponse, status_code=status.HTTP_201_CREATED)
@@ -119,12 +157,12 @@ async def request_analysis(
     # Check for uploaded S3 documents to enrich Bedrock clinical context
     docs_context = ""
     try:
-        docs_res = db.table("documents").select("filename, category, uploaded_at").eq("patient_id", request.patient_id).execute()
+        docs_res = db.table("documents").select("*").eq("patient_id", request.patient_id).execute()
         if docs_res.data:
-            doc_summaries = [f"{d.get('filename')} ({d.get('category')})" for d in docs_res.data]
-            docs_context = f" | Attached S3 Documents: {', '.join(doc_summaries)}"
-    except Exception:
-        docs_context = ""
+            doc_contexts = [extract_document_context(d) for d in docs_res.data]
+            docs_context = "\n\nUploaded document context:\n" + "\n".join(doc_contexts)
+    except Exception as exc:
+        docs_context = f"\n\nUploaded document context unavailable: {exc}"
 
     combined_test_results = (request.test_results or "") + docs_context
 
@@ -160,6 +198,7 @@ async def request_analysis(
         request.new_symptoms,
         request.observations,
         combined_test_results,
+        request.clinical_notes,
         db
     )
     
@@ -229,6 +268,7 @@ async def get_analysis(
         recommendations=recommendations,
         drug_interactions=drug_interactions,
         risk_factors=risk_factors,
+        patient_explanation=analysis.get("patient_explanation"),
         generated_at=analysis["generated_at"],
         reviewed_at=analysis.get("reviewed_at")
     )
