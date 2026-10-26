@@ -1,18 +1,25 @@
 from fastapi import APIRouter, HTTPException, status, Depends, BackgroundTasks
 from supabase import Client
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 from models.schemas import (
     AnalysisRequest, AnalysisResponse, DecisionCreate, DecisionResponse,
-    DiagnosisResponse, RecommendationResponse, DrugInteractionResponse
+    DiagnosisResponse, RecommendationResponse, DrugInteractionResponse,
+    RetrievedEvidenceItem, IngestionRequest, IngestionResponse,
+    RetrievalQueryRequest, RetrievalQueryResponse
 )
 from core.security import get_current_user, require_role
 from core.database import get_db
 from services.bedrock_service import bedrock_service
 from services.s3_service import s3_service
+from services.rag_ingestion_service import rag_ingestion_service
+from services.rag_retrieval_service import rag_retrieval_service
 import random
 import io
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/analyses", tags=["Clinical Analyses"])
 
@@ -57,30 +64,38 @@ def process_analysis_background(
     observations: str,
     test_results: str,
     clinical_notes: str,
+    retrieved_evidence: list,
     db: Client,
 ):
-    """Background task to process analysis with AWS Bedrock AI engine"""
+    """Background task to process analysis with AWS Bedrock AI engine grounded in RAG"""
     import logging
     logger = logging.getLogger(__name__)
 
     try:
-        # Generate analysis via AWS Bedrock
+        # Generate analysis via AWS Bedrock grounded in patient evidence
         analysis_data = bedrock_service.generate_analysis(
             patient_data=patient_data,
             new_symptoms=symptoms,
             observations=observations,
             test_results=test_results,
             clinical_notes=clinical_notes,
+            retrieved_evidence=retrieved_evidence
         )
         
         # Insert diagnoses
         for diag in analysis_data.get("diagnoses", []):
+            raw_conf = str(diag.get("confidence_label", "needs_review")).lower()
+            if raw_conf in ("moderate", "medium"):
+                raw_conf = "needs_review"
+            elif raw_conf not in ("high", "needs_review", "low"):
+                raw_conf = "needs_review"
+
             db.table("diagnoses").insert({
                 "analysis_id": analysis_id,
                 "rank": diag.get("rank", 1),
                 "name": diag.get("name", "Clinical Differential"),
                 "confidence_percentage": diag.get("confidence_percentage", 75.0),
-                "confidence_label": diag.get("confidence_label", "moderate"),
+                "confidence_label": raw_conf,
                 "summary": diag.get("summary", ""),
                 "evidence": diag.get("evidence", [])
             }).execute()
@@ -122,17 +137,38 @@ def process_analysis_background(
             except Exception as re:
                 logger.warning(f"Error linking risk factor {risk_name}: {re}")
 
-        db.table("clinical_analyses").update({
-            "patient_explanation": analysis_data["patient_explanation"]
-        }).eq("id", analysis_id).execute()
-        
-        # Update status to awaiting_review
-        db.table("clinical_analyses").update({
+        # Serialize retrieved evidence items
+        serialized_evidence = [
+            item.model_dump() if hasattr(item, "model_dump") else dict(item)
+            for item in (retrieved_evidence or [])
+        ]
+
+        # Update analysis with explanation, evidence, and status awaiting_review
+        update_payload = {
+            "patient_explanation": analysis_data.get("patient_explanation"),
+            "retrieved_evidence": serialized_evidence,
             "status": "awaiting_review"
-        }).eq("id", analysis_id).execute()
+        }
+        try:
+            db.table("clinical_analyses").update(update_payload).eq("id", analysis_id).execute()
+        except Exception as ue:
+            if "PGRST204" in str(ue) or "column" in str(ue).lower():
+                logger.warning(f"Remote Supabase schema lacks extended columns; updating core status: {ue}")
+                core_update = {"status": "awaiting_review"}
+                db.table("clinical_analyses").update(core_update).eq("id", analysis_id).execute()
+            else:
+                raise ue
 
     except Exception as e:
         logger.error(f"Error in process_analysis_background for analysis {analysis_id}: {e}", exc_info=True)
+        # Mark failure status in database so client does not poll indefinitely
+        try:
+            db.table("clinical_analyses").update({
+                "status": "failed",
+                "clinical_notes": f"Inference error: {str(e)[:250]}"
+            }).eq("id", analysis_id).execute()
+        except Exception:
+            pass
 
 
 @router.post("", response_model=AnalysisResponse, status_code=status.HTTP_201_CREATED)
@@ -142,9 +178,9 @@ async def request_analysis(
     current_user: dict = Depends(require_role("doctor")),
     db: Client = Depends(get_db)
 ):
-    """Request a new clinical analysis powered by AWS Bedrock"""
+    """Request a new clinical analysis powered by AWS Bedrock and Patient RAG"""
     
-    # Get patient data
+    # 1. Verify patient exists
     patient_response = db.table("patients").select("*").eq("id", request.patient_id).execute()
     if not patient_response.data:
         raise HTTPException(
@@ -154,7 +190,7 @@ async def request_analysis(
     
     patient_data = patient_response.data[0]
     
-    # Check for uploaded S3 documents to enrich Bedrock clinical context
+    # 2. Check for uploaded S3 documents to enrich Bedrock clinical context
     docs_context = ""
     try:
         docs_res = db.table("documents").select("*").eq("patient_id", request.patient_id).execute()
@@ -166,7 +202,32 @@ async def request_analysis(
 
     combined_test_results = (request.test_results or "") + docs_context
 
-    # Create analysis record
+    # 3. Patient-Scoped RAG Ingestion & Retrieval Pipeline
+    # Ensure patient records and visits are indexed
+    try:
+        rag_ingestion_service.index_patient(request.patient_id, db=db)
+    except Exception as ie:
+        logger.warning(f"RAG pre-indexing warning for {request.patient_id}: {ie}")
+
+    # Retrieve patient-scoped clinical chunks
+    rag_query = f"{request.new_symptoms} {request.observations} {request.clinical_notes or ''}"
+    retrieved_evidence = []
+    try:
+        retrieved_evidence = rag_retrieval_service.retrieve_patient_evidence(
+            patient_id=request.patient_id,
+            query_text=rag_query,
+            current_user=current_user,
+            db=db
+        )
+    except Exception as re:
+        logger.error(f"Patient RAG retrieval error: {re}")
+
+    serialized_evidence = [
+        item.model_dump() if hasattr(item, "model_dump") else dict(item)
+        for item in retrieved_evidence
+    ]
+
+    # 4. Create analysis record
     report_id = generate_report_id()
     analysis_data = {
         "patient_id": request.patient_id,
@@ -176,11 +237,20 @@ async def request_analysis(
         "observations": request.observations,
         "test_results": request.test_results,
         "clinical_notes": request.clinical_notes,
+        "retrieved_evidence": serialized_evidence,
         "reviewed_by_id": current_user["id"],
         "generated_at": datetime.utcnow().isoformat()
     }
     
-    response = db.table("clinical_analyses").insert(analysis_data).execute()
+    try:
+        response = db.table("clinical_analyses").insert(analysis_data).execute()
+    except Exception as exc:
+        if "retrieved_evidence" in str(exc) or "PGRST204" in str(exc):
+            logger.warning(f"Remote schema lacks retrieved_evidence column; falling back to inserting without it: {exc}")
+            analysis_data_no_rag = {k: v for k, v in analysis_data.items() if k != "retrieved_evidence"}
+            response = db.table("clinical_analyses").insert(analysis_data_no_rag).execute()
+        else:
+            raise exc
     
     if not response.data:
         raise HTTPException(
@@ -190,7 +260,7 @@ async def request_analysis(
     
     analysis = response.data[0]
     
-    # Start background processing via Bedrock
+    # 5. Start background processing via Bedrock grounded in retrieved evidence
     background_tasks.add_task(
         process_analysis_background,
         analysis["id"],
@@ -199,10 +269,11 @@ async def request_analysis(
         request.observations,
         combined_test_results,
         request.clinical_notes,
+        retrieved_evidence,
         db
     )
     
-    # Return initial response
+    # 6. Return initial response
     return AnalysisResponse(
         id=analysis["id"],
         patient_id=analysis["patient_id"],
@@ -212,6 +283,7 @@ async def request_analysis(
         recommendations=[],
         drug_interactions=[],
         risk_factors=[],
+        retrieved_evidence=retrieved_evidence,
         generated_at=analysis.get("generated_at", datetime.utcnow()),
         reviewed_at=None
     )
@@ -259,6 +331,15 @@ async def get_analysis(
     ).eq("analysis_id", analysis_id).execute()
     risk_factors = [r["risk_factor"]["name"] for r in risk_response.data if r.get("risk_factor")]
     
+    # Parse retrieved evidence
+    raw_evidence = analysis.get("retrieved_evidence") or []
+    retrieved_evidence = []
+    for item in raw_evidence:
+        try:
+            retrieved_evidence.append(RetrievedEvidenceItem(**item) if isinstance(item, dict) else item)
+        except Exception:
+            pass
+
     return AnalysisResponse(
         id=analysis["id"],
         patient_id=analysis["patient_id"],
@@ -269,6 +350,7 @@ async def get_analysis(
         drug_interactions=drug_interactions,
         risk_factors=risk_factors,
         patient_explanation=analysis.get("patient_explanation"),
+        retrieved_evidence=retrieved_evidence,
         generated_at=analysis["generated_at"],
         reviewed_at=analysis.get("reviewed_at")
     )
@@ -326,8 +408,16 @@ async def record_decision(
             detail="Failed to record decision"
         )
     
-    # Update analysis status
-    new_status = decision.decision_type.value  # approve, modify, or reject
+    # Update analysis status (mapping approve -> approved, modify -> modified, reject -> rejected)
+    status_map = {
+        "approve": "approved",
+        "modify": "modified",
+        "reject": "rejected",
+        "approved": "approved",
+        "modified": "modified",
+        "rejected": "rejected"
+    }
+    new_status = status_map.get(decision.decision_type.value, "approved")
     db.table("clinical_analyses").update({
         "status": new_status,
         "reviewed_at": now_iso
@@ -337,3 +427,47 @@ async def record_decision(
     if "decided_at" not in record:
         record["decided_at"] = now_iso
     return DecisionResponse(**record)
+
+
+@router.post("/rag/index", response_model=IngestionResponse)
+async def trigger_rag_ingestion(
+    req: IngestionRequest,
+    current_user: dict = Depends(require_role("doctor", "assistant", "admin")),
+    db: Client = Depends(get_db)
+):
+    """Trigger on-demand RAG indexing for a specific patient or all patients"""
+    if req.patient_id:
+        result = rag_ingestion_service.index_patient(req.patient_id, force_reindex=req.force_reindex, db=db)
+        return IngestionResponse(
+            success=result.get("status") == "success",
+            message=f"Indexed patient {req.patient_id}",
+            indexed_patients=1,
+            total_chunks_indexed=result.get("total_chunks", 0),
+            details=[result]
+        )
+    else:
+        results = rag_ingestion_service.index_all_patients(force_reindex=req.force_reindex, db=db)
+        return IngestionResponse(**results)
+
+
+@router.post("/rag/search", response_model=RetrievalQueryResponse)
+async def search_patient_rag(
+    req: RetrievalQueryRequest,
+    current_user: dict = Depends(require_role("doctor", "assistant")),
+    db: Client = Depends(get_db)
+):
+    """Execute patient-scoped vector retrieval without running full CDS synthesis"""
+    results = rag_retrieval_service.retrieve_patient_evidence(
+        patient_id=req.patient_id,
+        query_text=req.query,
+        current_user=current_user,
+        top_k=req.top_k,
+        min_similarity=req.min_similarity,
+        db=db
+    )
+    return RetrievalQueryResponse(
+        patient_id=req.patient_id,
+        query=req.query,
+        total_retrieved=len(results),
+        results=results
+    )

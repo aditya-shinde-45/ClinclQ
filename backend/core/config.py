@@ -25,6 +25,14 @@ class Settings(BaseSettings):
     AWS_REGION: str = "ap-south-1"
     AWS_S3_BUCKET_NAME: str = "cliniq-documents-mumbai"
     AWS_BEDROCK_MODEL_ID: str = "meta.llama3-70b-instruct-v1:0"
+    AWS_BEDROCK_EMBEDDING_MODEL_ID: str = "amazon.titan-embed-text-v2:0"
+    AWS_BEDROCK_EMBEDDING_DIM: int = 1024
+    
+    # RAG Configuration
+    RAG_CHUNK_SIZE: int = 500
+    RAG_CHUNK_OVERLAP: int = 50
+    RAG_TOP_K: int = 4
+    RAG_MIN_SIMILARITY: float = 0.20
     
     @property
     def cors_origins_list(self) -> List[str]:

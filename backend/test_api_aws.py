@@ -105,7 +105,7 @@ def run_tests():
     # 6. Wait for and Verify Bedrock Output
     print(f"\n[TEST 6] GET /analyses/{analysis_id} (Verifying Bedrock generated report)")
     # Poll until background processing completes
-    max_wait = 20
+    max_wait = 35
     start_time = time.time()
     completed_analysis = None
     while time.time() - start_time < max_wait:

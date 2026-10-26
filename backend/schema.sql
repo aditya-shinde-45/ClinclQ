@@ -85,6 +85,7 @@ CREATE TABLE clinical_analyses (
     test_results TEXT,
     clinical_notes TEXT,
     patient_explanation TEXT,
+    retrieved_evidence JSONB DEFAULT '[]'::jsonb,
     generated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     reviewed_at TIMESTAMP WITH TIME ZONE,
     reviewed_by_id INTEGER REFERENCES users(id) ON DELETE SET NULL
@@ -220,3 +221,25 @@ CREATE TRIGGER update_appointments_updated_at BEFORE UPDATE ON appointments
 
 CREATE TRIGGER update_knowledge_sources_updated_at BEFORE UPDATE ON knowledge_sources
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Enable pgvector extension for RAG vector search
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- Patient Record Chunks table for patient-centric RAG
+CREATE TABLE IF NOT EXISTS patient_record_chunks (
+    id SERIAL PRIMARY KEY,
+    patient_id VARCHAR(20) NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+    chunk_id VARCHAR(120) UNIQUE NOT NULL,
+    source_type VARCHAR(50) NOT NULL,
+    source_id VARCHAR(100),
+    content TEXT NOT NULL,
+    content_hash VARCHAR(64) NOT NULL,
+    embedding vector(1024) NOT NULL,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_record_chunks_patient ON patient_record_chunks(patient_id);
+CREATE INDEX IF NOT EXISTS idx_record_chunks_source ON patient_record_chunks(source_type, source_id);
+CREATE INDEX IF NOT EXISTS idx_record_chunks_hash ON patient_record_chunks(content_hash);
