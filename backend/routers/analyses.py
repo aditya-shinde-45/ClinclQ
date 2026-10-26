@@ -457,6 +457,14 @@ async def search_patient_rag(
     db: Client = Depends(get_db)
 ):
     """Execute patient-scoped vector retrieval without running full CDS synthesis"""
+    # Verify patient exists
+    p_check = db.table("patients").select("id").eq("id", req.patient_id).execute()
+    if not p_check.data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Patient '{req.patient_id}' not found"
+        )
+
     results = rag_retrieval_service.retrieve_patient_evidence(
         patient_id=req.patient_id,
         query_text=req.query,

@@ -23,6 +23,11 @@ from core.database import get_db
 
 DATASET_PATH = BACKEND_DIR / "dataset" / "archive" / "hospital data analysis.csv"
 
+EXPECTED_COLUMNS = [
+    "Patient_ID", "Age", "Gender", "Condition", "Procedure",
+    "Cost", "Length_of_Stay", "Readmission", "Outcome", "Satisfaction"
+]
+
 
 def calculate_dob_from_age(age_years: int) -> str:
     """Derive approximate date of birth from age string."""
@@ -33,10 +38,7 @@ def calculate_dob_from_age(age_years: int) -> str:
 
 def validate_row(row: dict) -> tuple[bool, str]:
     """Validate data integrity for an incoming CSV record."""
-    required_fields = [
-        "Patient_ID", "Age", "Gender", "Condition", "Procedure",
-        "Cost", "Length_of_Stay", "Readmission", "Outcome", "Satisfaction"
-    ]
+    required_fields = EXPECTED_COLUMNS
     for field in required_fields:
         if field not in row or not str(row[field]).strip():
             return False, f"Missing required column: {field}"
@@ -199,8 +201,8 @@ def import_dataset(dry_run: bool = False, limit: int = None, index_rag: bool = F
     print("=" * 65)
 
     # Optional RAG indexing trigger
-    if index_rag and not dry_run and imported_patients > 0:
-        print("\nTriggering RAG Indexing for newly imported patients...")
+    if index_rag and not dry_run:
+        print("\nTriggering RAG Indexing for registered patients...")
         from services.rag_ingestion_service import rag_ingestion_service
         ingest_res = rag_ingestion_service.index_all_patients()
         print(f"RAG Indexing Finished: {ingest_res['total_chunks_indexed']} chunks created across {ingest_res['indexed_patients']} patients.")

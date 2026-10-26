@@ -81,3 +81,8 @@ Desktop.ini
 *.backup
 .temp/
 temp/
+
+# Demo credentials and secrets (local only)
+demo_credentials.local.json
+*.local.json
+*.credentials.json

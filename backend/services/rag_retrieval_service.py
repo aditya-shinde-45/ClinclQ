@@ -121,6 +121,12 @@ class RagRetrievalService:
                 if str(r.get("patient_id")) != str(patient_id):
                     continue
                 emb = r.get("embedding", [])
+                if isinstance(emb, str):
+                    try:
+                        import json
+                        emb = json.loads(emb)
+                    except Exception:
+                        emb = [float(x.strip()) for x in emb.strip("[]").split(",") if x.strip()]
                 if not emb or len(emb) != len(query_vector):
                     continue
 
