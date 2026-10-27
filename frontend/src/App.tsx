@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useMemo, type ReactNode } from "react";
 import { authAPI, patientsAPI, appointmentsAPI, analysesAPI, documentsAPI, adminAPI } from "./api";
 import { setAuthToken, clearAuthToken, getCurrentUser, setCurrentUser, isAuthenticated } from "./config";
 
@@ -176,48 +176,114 @@ function Status({
 
 // Patient data now comes from API - see PatientContext component
 
-function Timeline({ compact = false, patientId }: { compact?: boolean; patientId?: string }) {
-  const [timeline, setTimeline] = useState<any[]>([]);
+function formatRecordType(type: string): { label: string; tone: "success" | "caution" | "critical" | "neutral" | "admin" } {
+  switch (type) {
+    case "ai_analysis":
+      return { label: "AI analysis", tone: "success" };
+    case "lab_result":
+      return { label: "Lab result", tone: "caution" };
+    case "procedure":
+      return { label: "Procedure", tone: "admin" };
+    case "clinical_note":
+      return { label: "Clinical note", tone: "neutral" };
+    case "doctor_note":
+    default:
+      return { label: "Doctor note", tone: "neutral" };
+  }
+}
+
+function Timeline({
+  compact = false,
+  patientId,
+  items,
+  limit,
+  filterType = "all",
+}: {
+  compact?: boolean;
+  patientId?: string;
+  items?: any[];
+  limit?: number;
+  filterType?: string;
+}) {
+  const [timeline, setTimeline] = useState<any[]>(items || []);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (items) {
+      setTimeline(items);
+      return;
+    }
     if (!patientId) return;
-    
+
     setLoading(true);
-    patientsAPI.getTimeline(patientId)
-      .then(data => {
+    patientsAPI
+      .getTimeline(patientId)
+      .then((data) => {
         setTimeline(data);
         setLoading(false);
       })
-      .catch(err => {
-        console.error('Failed to load timeline:', err);
+      .catch((err) => {
+        console.error("Failed to load timeline:", err);
         setLoading(false);
       });
-  }, [patientId]);
+  }, [patientId, items]);
+
+  const filtered = useMemo(() => {
+    if (!filterType || filterType === "all") return timeline;
+    if (filterType === "doctor_note") {
+      return timeline.filter(
+        (item) => item.type === "doctor_note" || item.type === "clinical_note"
+      );
+    }
+    return timeline.filter((item) => item.type === filterType);
+  }, [timeline, filterType]);
+
+  const displayed = limit ? filtered.slice(0, limit) : filtered;
 
   if (loading) {
-    return <div className="timeline"><p>Loading timeline...</p></div>;
+    return (
+      <div className="timeline">
+        <p style={{ color: "var(--muted)" }}>Loading timeline records...</p>
+      </div>
+    );
   }
 
-  if (timeline.length === 0) {
-    return <div className="timeline"><p>No timeline events yet</p></div>;
+  if (displayed.length === 0) {
+    return (
+      <div className="timeline">
+        <p style={{ color: "var(--muted)", fontStyle: "italic", margin: "14px 0" }}>
+          {timeline.length === 0 ? "No timeline events recorded yet" : "No records match the selected filter"}
+        </p>
+      </div>
+    );
   }
 
   return (
     <div className={`timeline ${compact ? "timeline--compact" : ""}`}>
-      {timeline.map((item, idx) => (
-        <div className="timeline__item" key={`${item.visit_date}-${idx}`}>
-          <div className="timeline__marker" aria-hidden="true" />
-          <div className="timeline__date">{new Date(item.visit_date).toLocaleDateString()}</div>
-          <div className="timeline__content">
-            <div className="timeline__topline">
-              <strong>{item.title}</strong>
-              <Status tone="neutral">{item.type}</Status>
+      {displayed.map((item, idx) => {
+        const badge = formatRecordType(item.type);
+        const formattedDate = item.visit_date
+          ? new Date(item.visit_date).toLocaleDateString(undefined, {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })
+          : "Date unspecified";
+
+        return (
+          <div className="timeline__item" key={`${item.id || item.visit_date}-${idx}`}>
+            <div className="timeline__marker" aria-hidden="true" />
+            <div className="timeline__date">{formattedDate}</div>
+            <div className="timeline__content">
+              <div className="timeline__topline">
+                <strong>{item.title}</strong>
+                <Status tone={badge.tone}>{badge.label}</Status>
+              </div>
+              <p>{item.body}</p>
             </div>
-            <p>{item.body}</p>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -863,10 +929,14 @@ function PatientSearch({ navigate, setCurrentPatient, role = "Doctor" }: { navig
 function PatientChart({ navigate, currentPatient, role = "Doctor" }: { navigate: (view: View) => void; currentPatient: any; role?: "Doctor" | "Assistant" }) {
   const [timeline, setTimeline] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState<string>("all");
+  const [displayLimit, setDisplayLimit] = useState<number>(3);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
     if (!currentPatient) return;
 
+    setLoading(true);
     patientsAPI.getTimeline(currentPatient.id)
       .then(data => {
         setTimeline(data);
@@ -877,6 +947,26 @@ function PatientChart({ navigate, currentPatient, role = "Doctor" }: { navigate:
         setLoading(false);
       });
   }, [currentPatient]);
+
+  const filteredTimeline = useMemo(() => {
+    if (filterType === "all") return timeline;
+    if (filterType === "doctor_note") {
+      return timeline.filter(r => r.type === "doctor_note" || r.type === "clinical_note");
+    }
+    return timeline.filter(r => r.type === filterType);
+  }, [timeline, filterType]);
+
+  const visibleTimeline = filteredTimeline.slice(0, displayLimit);
+  const remainingCount = Math.max(0, filteredTimeline.length - visibleTimeline.length);
+  const hasMore = remainingCount > 0;
+
+  const handleLoadEarlier = () => {
+    setLoadingMore(true);
+    setTimeout(() => {
+      setDisplayLimit(prev => prev + 3);
+      setLoadingMore(false);
+    }, 200);
+  };
 
   if (!currentPatient) {
     return (
@@ -935,11 +1025,60 @@ function PatientChart({ navigate, currentPatient, role = "Doctor" }: { navigate:
           </div>
           <section className="history-section">
             <div className="section-title">
-              <div><h2>Previous records</h2><p>Chronological clinical history</p></div>
-              <select aria-label="Filter record type"><option>All record types</option><option>Lab results</option><option>AI analyses</option></select>
+              <div>
+                <h2>Previous records</h2>
+                <p>Chronological clinical history ({filteredTimeline.length} recorded)</p>
+              </div>
+              <select
+                aria-label="Filter record type"
+                value={filterType}
+                onChange={(e) => {
+                  setFilterType(e.target.value);
+                  setDisplayLimit(3);
+                }}
+              >
+                <option value="all">All record types ({timeline.length})</option>
+                <option value="doctor_note">Doctor & Clinical notes</option>
+                <option value="lab_result">Lab results</option>
+                <option value="ai_analysis">AI analyses</option>
+                <option value="procedure">Procedures & Imaging</option>
+              </select>
             </div>
-            <Timeline patientId={currentPatient.id} />
-            <Button variant="secondary">Load earlier records</Button>
+            
+            {loading ? (
+              <div className="timeline"><p style={{ color: "var(--muted)" }}>Loading records...</p></div>
+            ) : filteredTimeline.length === 0 ? (
+              <div className="timeline">
+                <p style={{ color: "var(--muted)", fontStyle: "italic", margin: "14px 0" }}>
+                  {timeline.length === 0 ? "No timeline events recorded yet" : "No records match the selected filter"}
+                </p>
+              </div>
+            ) : (
+              <Timeline items={visibleTimeline} />
+            )}
+
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", marginTop: "1rem" }}>
+              {hasMore ? (
+                <Button 
+                  variant="secondary" 
+                  onClick={handleLoadEarlier}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? "Loading earlier records..." : `Load earlier records (${remainingCount} remaining)`}
+                </Button>
+              ) : filteredTimeline.length > 0 ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--muted)", fontSize: "13px" }}>
+                  <span style={{ display: "inline-block", width: "7px", height: "7px", borderRadius: "50%", background: "#10b981" }} />
+                  All {filteredTimeline.length} historical records loaded
+                </div>
+              ) : null}
+
+              {filteredTimeline.length > 3 && (
+                <small style={{ color: "var(--muted)", fontSize: "12px" }}>
+                  Showing {visibleTimeline.length} of {filteredTimeline.length} {filterType !== "all" ? `filtered (${timeline.length} total)` : "records"}
+                </small>
+              )}
+            </div>
           </section>
         </div>
       </main>
