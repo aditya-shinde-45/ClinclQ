@@ -137,11 +137,15 @@ class RagRetrievalService:
                 else:
                     sim = 0.0
 
-                if sim >= threshold:
-                    scored.append((sim, r))
+                scored.append((sim, r))
 
             scored.sort(key=lambda x: x[0], reverse=True)
-            for sim, r in scored[:k]:
+            # Select chunks meeting threshold; if none meet threshold, adaptively take the top-matching patient chunk
+            filtered = [(sim, r) for sim, r in scored if sim >= threshold]
+            if not filtered and scored and scored[0][0] >= 0.05:
+                filtered = scored[:1]
+
+            for sim, r in filtered[:k]:
                 results.append(RetrievedEvidenceItem(
                     chunk_id=str(r["chunk_id"]),
                     source_type=str(r.get("source_type", "record")),

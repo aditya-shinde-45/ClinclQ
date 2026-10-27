@@ -1,6 +1,7 @@
 import json
 import logging
 from typing import List, Optional
+import core.aws_time_sync  # Ensure botocore SigV4 runtime timestamp is calibrated
 from core.config import settings
 
 logger = logging.getLogger(__name__)
