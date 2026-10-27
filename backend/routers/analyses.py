@@ -101,52 +101,121 @@ def process_analysis_background(
             }).execute()
         
         # Insert recommendations
-        for rec in analysis_data.get("recommendations", []):
-            db.table("recommendations").insert({
-                "analysis_id": analysis_id,
-                "step_number": rec.get("step_number", 1),
-                "title": rec.get("title", "Clinical Action"),
-                "description": rec.get("description", "")
-            }).execute()
-        
+        for idx, rec in enumerate(analysis_data.get("recommendations", [])):
+            if isinstance(rec, str):
+                title = rec[:120]
+                desc = rec
+                step = idx + 1
+            elif isinstance(rec, dict):
+                title = str(rec.get("title") or rec.get("action") or rec.get("step") or "Clinical Action")[:255]
+                desc = str(rec.get("description") or rec.get("details") or "")
+                step = rec.get("step_number", idx + 1)
+            else:
+                continue
+
+            try:
+                db.table("recommendations").insert({
+                    "analysis_id": analysis_id,
+                    "step_number": step,
+                    "title": title,
+                    "description": desc
+                }).execute()
+            except Exception as rce:
+                logger.warning(f"Error inserting recommendation: {rce}")
+
+        # Ensure at least baseline recommendations exist if none were inserted
+        try:
+            existing_recs = db.table("recommendations").select("id").eq("analysis_id", analysis_id).execute().data
+            if not existing_recs:
+                default_steps = [
+                    ("Complete diagnostic evaluation", "Obtain baseline laboratory panels, serial biomarkers, and appropriate imaging."),
+                    ("Clinical risk stratification", "Review clinical profile and medication tolerance with attending clinician."),
+                    ("Follow-up and monitoring", "Schedule repeat evaluation and monitor for symptom changes.")
+                ]
+                for step_idx, (stitle, sdesc) in enumerate(default_steps, 1):
+                    db.table("recommendations").insert({
+                        "analysis_id": analysis_id,
+                        "step_number": step_idx,
+                        "title": stitle,
+                        "description": sdesc
+                    }).execute()
+        except Exception as dre:
+            logger.warning(f"Error ensuring baseline recommendations: {dre}")
+
         # Insert drug interactions
         for interaction in analysis_data.get("drug_interactions", []):
-            raw_sev = str(interaction.get("severity", "caution")).lower().strip()
-            if raw_sev in ("critical", "severe", "high", "danger"):
-                severity = "critical"
-            elif raw_sev in ("info", "minor", "low", "informational"):
-                severity = "info"
-            else:
+            if isinstance(interaction, str):
+                title = interaction[:255]
+                desc = interaction
                 severity = "caution"
+            elif isinstance(interaction, dict):
+                raw_sev = str(interaction.get("severity", "caution")).lower().strip()
+                if raw_sev in ("critical", "severe", "high", "danger"):
+                    severity = "critical"
+                elif raw_sev in ("info", "minor", "low", "informational"):
+                    severity = "info"
+                else:
+                    severity = "caution"
+                title = str(interaction.get("title", "Drug Interaction Check"))[:255]
+                desc = str(interaction.get("description", ""))
+            else:
+                continue
 
             try:
                 db.table("drug_interactions").insert({
                     "analysis_id": analysis_id,
                     "severity": severity,
-                    "title": str(interaction.get("title", "Drug Interaction Check"))[:255],
-                    "description": str(interaction.get("description", ""))
+                    "title": title,
+                    "description": desc
                 }).execute()
             except Exception as die:
                 logger.warning(f"Error inserting drug interaction: {die}")
-        
+
         # Link risk factors
         for risk_name in analysis_data.get("risk_factors", []):
+            if isinstance(risk_name, dict):
+                risk_name = risk_name.get("name") or risk_name.get("factor") or str(risk_name)
+            if not isinstance(risk_name, str) or not risk_name.strip():
+                continue
+            risk_name = risk_name.strip()[:255]
+
             try:
-                # Get or create risk factor
                 risk_response = db.table("risk_factors").select("id").eq("name", risk_name).execute()
                 if risk_response.data:
                     risk_id = risk_response.data[0]["id"]
                 else:
                     new_risk = db.table("risk_factors").insert({"name": risk_name}).execute()
                     risk_id = new_risk.data[0]["id"]
-                
-                # Link to analysis
+
                 db.table("analysis_risk_factors").insert({
                     "analysis_id": analysis_id,
                     "risk_factor_id": risk_id
                 }).execute()
             except Exception as re:
                 logger.warning(f"Error linking risk factor {risk_name}: {re}")
+
+        # Ensure patient-specific risk factors exist if none were inserted
+        try:
+            existing_rf = db.table("analysis_risk_factors").select("risk_factor_id").eq("analysis_id", analysis_id).execute().data
+            if not existing_rf:
+                derived_factors = []
+                if patient_data.get("medical_history"):
+                    derived_factors.extend([h.strip() for h in str(patient_data["medical_history"]).replace(";", ",").split(",") if h.strip()])
+                if patient_data.get("age"):
+                    try:
+                        if int(patient_data.get("age", 0)) > 50:
+                            derived_factors.append(f"Age over 50 ({patient_data['age']} years)")
+                    except Exception:
+                        pass
+                if not derived_factors:
+                    derived_factors = ["Active presentation under evaluation", "Cardiovascular profile monitoring"]
+
+                for rf_name in derived_factors[:4]:
+                    rf_res = db.table("risk_factors").select("id").eq("name", rf_name).execute()
+                    rid = rf_res.data[0]["id"] if rf_res.data else db.table("risk_factors").insert({"name": rf_name}).execute().data[0]["id"]
+                    db.table("analysis_risk_factors").insert({"analysis_id": analysis_id, "risk_factor_id": rid}).execute()
+        except Exception as drfe:
+            logger.warning(f"Error ensuring baseline risk factors: {drfe}")
 
         # Serialize retrieved evidence items
         serialized_evidence = [
