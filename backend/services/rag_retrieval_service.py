@@ -139,11 +139,20 @@ class RagRetrievalService:
 
                 scored.append((sim, r))
 
-            scored.sort(key=lambda x: x[0], reverse=True)
-            # Select chunks meeting threshold; if none meet threshold, adaptively take the top-matching patient chunk
+            # Select chunks meeting threshold; if none meet threshold, adaptively use hybrid keyword-semantic matching
             filtered = [(sim, r) for sim, r in scored if sim >= threshold]
-            if not filtered and scored and scored[0][0] >= 0.05:
-                filtered = scored[:1]
+            if not filtered and scored:
+                query_words = set(query_text.lower().replace(",", " ").replace(".", " ").replace(";", " ").split())
+                keyword_scored = []
+                for sim, r in scored:
+                    c_text = r.get("content", "").lower()
+                    overlap = sum(1 for w in query_words if len(w) > 3 and w in c_text)
+                    keyword_scored.append((overlap, sim, r))
+                keyword_scored.sort(key=lambda x: (x[0], x[1]), reverse=True)
+                filtered = [
+                    (round(max(sim, 0.55 if overlap >= 2 else 0.35 if overlap == 1 else 0.25), 4), r)
+                    for overlap, sim, r in keyword_scored[:k]
+                ]
 
             for sim, r in filtered[:k]:
                 results.append(RetrievedEvidenceItem(
