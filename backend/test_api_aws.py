@@ -56,9 +56,30 @@ def run_tests():
     print(f"PASS: Authenticated as {user_info['full_name']} (Role: {user_info['role']})")
 
     # 3. AWS S3 Document Upload
+    def generate_valid_pdf_bytes(text: str) -> bytes:
+        stream_data = f"BT\n/F1 12 Tf\n50 750 Td\n({text}) Tj\nET\n".encode("latin-1")
+        stream_len = len(stream_data)
+        parts = [b"%PDF-1.4\n"]
+        pos1 = sum(len(p) for p in parts)
+        parts.append(b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n")
+        pos2 = sum(len(p) for p in parts)
+        parts.append(b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n")
+        pos3 = sum(len(p) for p in parts)
+        parts.append(b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n")
+        pos4 = sum(len(p) for p in parts)
+        parts.append(f"4 0 obj\n<< /Length {stream_len} >>\nstream\n".encode("latin-1") + stream_data + b"endstream\nendobj\n")
+        pos5 = sum(len(p) for p in parts)
+        parts.append(b"5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n")
+        xref_pos = sum(len(p) for p in parts)
+        xref_str = f"xref\n0 6\n0000000000 65535 f \n{pos1:010d} 00000 n \n{pos2:010d} 00000 n \n{pos3:010d} 00000 n \n{pos4:010d} 00000 n \n{pos5:010d} 00000 n \n"
+        parts.append(xref_str.encode("latin-1"))
+        trailer_str = f"trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n{xref_pos}\n%%EOF\n"
+        parts.append(trailer_str.encode("latin-1"))
+        return b"".join(parts)
+
     patient_id = "CLQ-10482"
     print(f"\n[TEST 3] POST /documents/upload (Uploading to AWS S3 for {patient_id})")
-    test_pdf_content = b"%PDF-1.4 1 0 obj << /Title (ClinIQ Lab Report) >> endobj xref 0 1 trailer << /Size 1 >> startxref 99 %%EOF"
+    test_pdf_content = generate_valid_pdf_bytes("Cardiac Biomarkers Lab Report: High-sensitivity Troponin-I: 0.02 ng/mL (Normal). ECG: 1.5mm ST depression in V4-V6.")
     upload_file = ("cardiac_biomarkers.pdf", io.BytesIO(test_pdf_content), "application/pdf")
     
     upload_resp = client.post(

@@ -177,10 +177,11 @@ class TestClinIqRagPipeline(unittest.TestCase):
 
         evidence = rag_retrieval_service.retrieve_patient_evidence(
             patient_id=patient_id,
-            query_text="Chest pain, recurrent dyspnea",
+            query_text="Heart Disease inpatient care, Angioplasty recovery and hospital stay",
             current_user={"id": 1, "role": "doctor"},
             db=self.db
         )
+        self.assertGreater(len(evidence), 0, "Expected evidence items for patient CLQ-HOSP-0001")
 
         analysis = bedrock_service.generate_analysis(
             patient_data=patient_data,
@@ -198,10 +199,38 @@ class TestClinIqRagPipeline(unittest.TestCase):
         self.assertIn("patient_explanation", analysis)
         self.assertIn("retrieved_evidence", analysis)
         self.assertEqual(len(analysis["retrieved_evidence"]), len(evidence))
+        self.assertEqual(analysis.get("evidence_grounding_status"), "grounded")
 
         leading_diag = analysis["diagnoses"][0]
         print(f"  -> PASSED: Bedrock generated leading diagnosis: '{leading_diag['name']}' ({leading_diag['confidence_percentage']}%)")
         print(f"  -> Grounded in {len(analysis['retrieved_evidence'])} retrieved patient evidence items.")
+
+    def test_09_zero_evidence_insufficient_state(self):
+        """Regression Test: Verify zero retrieved evidence safely yields an insufficient-evidence state rather than confident conclusions."""
+        print("\n[TEST 9] Zero-Evidence Grounding Safety & Insufficient-Evidence State")
+        patient_id = "CLQ-HOSP-0001"
+        p_res = self.db.table("patients").select("*").eq("id", patient_id).execute()
+        patient_data = p_res.data[0]
+
+        # Explicitly pass zero retrieved evidence
+        analysis = bedrock_service.generate_analysis(
+            patient_data=patient_data,
+            new_symptoms="Unspecified malaise and generalized fatigue",
+            observations="Vitals stable, unrevealing physical exam",
+            test_results="Routine labs pending",
+            clinical_notes="No prior records available",
+            retrieved_evidence=[]
+        )
+
+        self.assertEqual(len(analysis["retrieved_evidence"]), 0)
+        self.assertEqual(analysis.get("evidence_grounding_status"), "insufficient_evidence")
+
+        # Must not produce high-confidence diagnosis without evidence
+        for diag in analysis["diagnoses"]:
+            self.assertNotEqual(diag["confidence_label"], "high", "Zero evidence must NOT produce 'high' confidence")
+            self.assertLessEqual(float(diag["confidence_percentage"]), 50.0, "Zero evidence confidence must not exceed 50%")
+
+        print("  -> PASSED: Verified zero-evidence presentation cannot silently produce a confident patient-specific conclusion.")
 
 
 if __name__ == "__main__":

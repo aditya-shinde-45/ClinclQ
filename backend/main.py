@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import core.aws_time_sync  # Calibrate botocore SigV4 runtime timestamp against AWS clock
 from core.config import settings
 from routers import auth, patients, appointments, analyses, documents, admin
 

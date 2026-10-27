@@ -8,6 +8,9 @@ from core.config import settings
 from services.s3_service import s3_service
 import uuid
 from datetime import datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/documents", tags=["Documents"])
 
@@ -148,5 +151,13 @@ async def delete_document(
     
     # Delete database record
     db.table("documents").delete().eq("id", document_id).execute()
+
+    # Clean up associated vector chunks from vector store
+    try:
+        from services.rag_ingestion_service import resolve_chunk_db
+        chunk_db = resolve_chunk_db(db)
+        chunk_db.table("patient_record_chunks").delete().eq("source_type", "document").eq("source_id", str(document_id)).execute()
+    except Exception as ce:
+        logger.warning(f"Warning cleaning up vector chunks for document {document_id}: {ce}")
     
     return None
