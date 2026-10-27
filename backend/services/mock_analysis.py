@@ -242,9 +242,16 @@ def generate_mock_analysis(patient_data: Dict[str, Any], symptoms: str, observat
             if default_risk not in extracted_risks:
                 extracted_risks.append(default_risk)
 
+    leading_name = diagnoses[0]["name"] if diagnoses else "the clinical presentation"
+    patient_explanation = (
+        f"Based on your current symptoms and medical history, we are evaluating for {leading_name.lower()}. "
+        "Our clinical team recommends completing the prioritized diagnostic steps above and reviewing the results directly with your physician before any changes to therapy."
+    )
+
     return {
         "diagnoses": diagnoses,
         "recommendations": recommendations,
         "drug_interactions": drug_interactions,
-        "risk_factors": extracted_risks[:5]
+        "risk_factors": extracted_risks[:5],
+        "patient_explanation": patient_explanation
     }
