@@ -18,11 +18,16 @@ def deserialize_vector(val):
     return val
 
 
-class VectorDeserializingRequestBuilder:
-    """Wraps PostgREST query builders to automatically deserialize pgvector columns into List[float]."""
+import time
+import httpx
 
-    def __init__(self, target):
+
+class VectorDeserializingRequestBuilder:
+    """Wraps PostgREST query builders to provide transient retry resilience and pgvector deserialization."""
+
+    def __init__(self, target, table_name: str = ""):
         self._target = target
+        self._table_name = table_name
 
     def __getattr__(self, name):
         attr = getattr(self._target, name)
@@ -30,14 +35,25 @@ class VectorDeserializingRequestBuilder:
             def wrapper(*args, **kwargs):
                 res = attr(*args, **kwargs)
                 if hasattr(res, "execute"):
-                    return VectorDeserializingRequestBuilder(res)
+                    return VectorDeserializingRequestBuilder(res, self._table_name)
                 return res
             return wrapper
         return attr
 
     def execute(self):
-        res = self._target.execute()
-        if hasattr(res, "data") and res.data:
+        last_err = None
+        for attempt in range(3):
+            try:
+                res = self._target.execute()
+                last_err = None
+                break
+            except (httpx.RemoteProtocolError, httpx.ReadTimeout, httpx.ConnectError, ConnectionResetError) as e:
+                last_err = e
+                time.sleep(0.15 * (attempt + 1))
+        if last_err is not None:
+            raise last_err
+
+        if hasattr(res, "data") and res.data and self._table_name == "patient_record_chunks":
             if isinstance(res.data, list):
                 for row in res.data:
                     if isinstance(row, dict) and "embedding" in row:
@@ -48,16 +64,14 @@ class VectorDeserializingRequestBuilder:
 
 
 class SupabaseClientWrapper:
-    """Proxy around Supabase Client to transparently handle pgvector deserialization for vector tables."""
+    """Proxy around Supabase Client with automatic transient resilience."""
 
     def __init__(self, client):
         self._client = client
 
     def table(self, table_name: str):
         builder = self._client.table(table_name)
-        if table_name == "patient_record_chunks":
-            return VectorDeserializingRequestBuilder(builder)
-        return builder
+        return VectorDeserializingRequestBuilder(builder, table_name)
 
     def from_(self, table_name: str):
         return self.table(table_name)
