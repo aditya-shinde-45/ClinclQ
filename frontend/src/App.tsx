@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { authAPI, patientsAPI, appointmentsAPI, analysesAPI, documentsAPI, adminAPI } from "./api";
-import { setAuthToken, clearAuthToken, getCurrentUser, setCurrentUser } from "./config";
+import { setAuthToken, clearAuthToken, getCurrentUser, setCurrentUser, isAuthenticated } from "./config";
 
 type View =
   | "landing"
@@ -1161,11 +1161,11 @@ function Processing({
             updated.status === "awaiting_review" ||
             updated.status === "failed" ||
             (updated.diagnoses && updated.diagnoses.length > 0) ||
-            attempts >= 25
+            attempts >= 50
           ) {
             if (isMounted) {
               setCurrentAnalysis(
-                (attempts >= 25 || updated.status === "failed") && (!updated.diagnoses || updated.diagnoses.length === 0)
+                (attempts >= 50 || updated.status === "failed") && (!updated.diagnoses || updated.diagnoses.length === 0)
                   ? { ...updated, status: "failed", error: updated.clinical_notes || "AWS Bedrock did not return a report before the request timed out." }
                   : updated
               );
@@ -1175,7 +1175,7 @@ function Processing({
           }
         } catch (e) {
           console.error("Error polling Bedrock analysis:", e);
-          if (attempts >= 20 && isMounted) {
+          if (attempts >= 45 && isMounted) {
             clearInterval(pollInterval);
             setCurrentAnalysis({
               ...currentAnalysis,
@@ -1241,12 +1241,14 @@ function Report({
   navigate,
   currentPatient,
   currentAnalysis,
+  setCurrentAnalysis,
   setLastDecision,
   print = false,
 }: {
   navigate: (view: View) => void;
   currentPatient: any;
   currentAnalysis: any;
+  setCurrentAnalysis?: (a: any) => void;
   setLastDecision: (d: any) => void;
   print?: boolean;
 }) {
@@ -1261,6 +1263,16 @@ function Report({
   const [clinicianNotes, setClinicianNotes] = useState("");
   const [attestation, setAttestation] = useState(true);
   const [savingDecision, setSavingDecision] = useState(false);
+
+  useEffect(() => {
+    if (currentAnalysis?.id && !currentAnalysis.patient_explanation) {
+      analysesAPI.getById(currentAnalysis.id).then((fresh) => {
+        if (fresh && fresh.patient_explanation && setCurrentAnalysis) {
+          setCurrentAnalysis(fresh);
+        }
+      }).catch(() => {});
+    }
+  }, [currentAnalysis?.id, currentAnalysis?.patient_explanation, setCurrentAnalysis]);
 
   if (
     !currentAnalysis?.id ||
@@ -1398,7 +1410,7 @@ function Report({
                   className={`diagnosis-row ${
                     expanded.includes(index) || print ? "is-expanded" : ""
                   }`}
-                  key={diagnosis.name}
+                  key={`${diagnosis.name}-${index}`}
                 >
                   <button
                     className="diagnosis-toggle"
@@ -2104,11 +2116,59 @@ function Compare({ navigate }: { navigate: (view: View) => void }) {
 }
 
 function AdminShell({ view, navigate, children }: { view: View; navigate: (view: View) => void; children: ReactNode }) {
+  const [accountMenu, setAccountMenu] = useState(false);
+  const user = getCurrentUser();
+  const displayName = user?.full_name || "Sneha Patil";
+
   return (
     <div className="admin-shell theme-admin">
-      <header className="admin-topbar"><button className="wordmark" onClick={() => navigate("admin-home")}>Clin<span>IQ</span><em>Admin</em></button><div><span>Northlake Medical Center</span><button>Alex Morgan <span aria-hidden="true">⌄</span></button></div></header>
+      <header className="admin-topbar">
+        <button className="wordmark" onClick={() => navigate("admin-home")}>
+          Clin<span>IQ</span><em>Admin</em>
+        </button>
+        <div style={{ position: "relative", display: "flex", alignItems: "center", gap: "1rem" }}>
+          <span>Northlake Medical Center</span>
+          <button
+            type="button"
+            className="user-menu"
+            aria-expanded={accountMenu}
+            onClick={() => setAccountMenu(!accountMenu)}
+          >
+            {displayName} <span aria-hidden="true">⌄</span>
+          </button>
+          {accountMenu && (
+            <div className="account-menu" style={{ position: "absolute", top: "100%", right: 0, zIndex: 100 }}>
+              <span style={{ display: "block", fontSize: "0.75rem", color: "#64748b", padding: "0.5rem 0.75rem" }}>
+                Role: Administrator
+              </span>
+              <button
+                onClick={() => {
+                  setAccountMenu(false);
+                  clearAuthToken();
+                  navigate("admin-login");
+                }}
+              >
+                Log out
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
       <nav className="admin-nav" aria-label="Admin console">
-        {[["admin-home", "System overview"], ["admin-users", "User management"], ["admin-data", "Datasets & knowledge"], ["admin-monitoring", "System monitoring"]].map(([target, label]) => <button className={view === target ? "is-active" : ""} onClick={() => navigate(target as View)} key={target}>{label}</button>)}
+        {[
+          ["admin-home", "System overview"],
+          ["admin-users", "User management"],
+          ["admin-data", "Datasets & knowledge"],
+          ["admin-monitoring", "System monitoring"],
+        ].map(([target, label]) => (
+          <button
+            className={view === target ? "is-active" : ""}
+            onClick={() => navigate(target as View)}
+            key={target}
+          >
+            {label}
+          </button>
+        ))}
       </nav>
       {children}
     </div>
@@ -2207,7 +2267,7 @@ export default function App() {
   const [lastDecision, setLastDecision] = useState<any>(null);
 
   useEffect(() => {
-    if (!currentPatient) {
+    if (!currentPatient && isAuthenticated()) {
       patientsAPI.getById("CLQ-10482").then(p => setCurrentPatient(p)).catch(() => {});
     }
   }, []);
@@ -2241,8 +2301,20 @@ export default function App() {
     window.location.hash.includes("/assistant") ? "Assistant" : "Doctor",
   );
   const navigate = (next: View) => {
-    if (next === "assistant-dashboard" || next === "intake" || next === "uploads") setRole("Assistant");
-    if (next === "doctor-dashboard") setRole("Doctor");
+    if (next === "assistant-dashboard" || next === "intake" || next === "uploads" || next === "schedule-appointment") {
+      setRole("Assistant");
+    } else if (
+      next === "doctor-dashboard" ||
+      next === "patient-chart" ||
+      next === "add-info" ||
+      next === "processing" ||
+      next === "report" ||
+      next === "confirmation" ||
+      next === "compare" ||
+      next === "print-report"
+    ) {
+      setRole("Doctor");
+    }
     window.location.hash = routes[next];
     setView(next);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2250,8 +2322,12 @@ export default function App() {
   useEffect(() => {
     const handleRouteChange = () => {
       const nextView = viewFromLocation();
-      if (window.location.hash.includes("/assistant")) setRole("Assistant");
-      if (window.location.hash.includes("/doctor")) setRole("Doctor");
+      const user = getCurrentUser();
+      if (user?.role === "assistant" || window.location.hash.includes("/assistant")) {
+        setRole("Assistant");
+      } else if (user?.role === "doctor" || window.location.hash.includes("/doctor")) {
+        setRole("Doctor");
+      }
       setView(nextView);
     };
     window.addEventListener("hashchange", handleRouteChange);
@@ -2266,7 +2342,7 @@ export default function App() {
   if (view === "patient-chart") return <PatientChart navigate={navigate} currentPatient={currentPatient} role={role} />;
   if (view === "add-info") return <AddInfo navigate={navigate} currentPatient={currentPatient} setCurrentAnalysis={setCurrentAnalysis} />;
   if (view === "processing") return <Processing navigate={navigate} currentAnalysis={currentAnalysis} setCurrentAnalysis={setCurrentAnalysis} currentPatient={currentPatient} />;
-  if (view === "report") return <Report navigate={navigate} currentPatient={currentPatient} currentAnalysis={currentAnalysis} setLastDecision={setLastDecision} />;
+  if (view === "report") return <Report navigate={navigate} currentPatient={currentPatient} currentAnalysis={currentAnalysis} setCurrentAnalysis={setCurrentAnalysis} setLastDecision={setLastDecision} />;
   if (view === "confirmation") return <Confirmation navigate={navigate} currentPatient={currentPatient} currentAnalysis={currentAnalysis} lastDecision={lastDecision} />;
   if (view === "intake") return <Intake navigate={navigate} />;
   if (view === "uploads") return <Uploads navigate={navigate} />;
