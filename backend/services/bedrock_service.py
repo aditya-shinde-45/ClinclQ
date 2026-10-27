@@ -67,7 +67,7 @@ class BedrockClinicalService:
             "   - Provide 3 to 5 prioritized, guideline-directed actions (diagnostic confirmation, acute therapy, monitoring).\n"
             "   - Mention relevant clinical guidelines (e.g. AHA/ACC, ESC, ADA, ATS) where applicable.\n"
             "3. Drug Interactions & Safety Warnings:\n"
-            "   - Screen current medications against acute conditions and potential therapies for critical or moderate interactions.\n"
+            "   - Screen current medications against acute conditions and potential therapies for interactions (severity: 'critical', 'caution', or 'info').\n"
             "   - If none found, provide an empty array [].\n"
             "4. Patient-Specific Risk Factors:\n"
             "   - 3 to 6 clinical risk factors relevant to the patient's presentation.\n\n"

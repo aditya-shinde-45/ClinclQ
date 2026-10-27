@@ -6,6 +6,7 @@ from pathlib import Path
 # Add backend directory to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import core.aws_time_sync  # Calibrate botocore SigV4 runtime timestamp against AWS clock
 from services.s3_service import s3_service
 from services.bedrock_service import bedrock_service
 
