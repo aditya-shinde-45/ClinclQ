@@ -192,6 +192,16 @@ function formatRecordType(type: string): { label: string; tone: "success" | "cau
   }
 }
 
+function getCheckupVitals(record: any) {
+  const body = String(record?.body || "");
+  const read = (label: string) => body.match(new RegExp(`${label}:\\s*([^\\n|]+)`, "i"))?.[1]?.trim() || "";
+  return {
+    bloodPressure: read("Blood pressure"),
+    heartRate: read("Heart rate"),
+    oxygen: read("O2 saturation"),
+  };
+}
+
 function Timeline({
   compact = false,
   patientId,
@@ -263,10 +273,12 @@ function Timeline({
       {displayed.map((item, idx) => {
         const badge = formatRecordType(item.type);
         const formattedDate = item.visit_date
-          ? new Date(item.visit_date).toLocaleDateString(undefined, {
+          ? new Date(item.visit_date).toLocaleString(undefined, {
               year: "numeric",
               month: "short",
               day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
             })
           : "Date unspecified";
 
@@ -720,12 +732,17 @@ function Login({
 function DoctorDashboard({ navigate, setCurrentPatient }: { navigate: (view: View) => void; setCurrentPatient: (p: any) => void }) {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [apptLoading, setApptLoading] = useState(true);
+  const [appointmentView, setAppointmentView] = useState<"today" | "upcoming">("today");
   const [patients, setPatients] = useState<any[]>([]);
   const [patientsLoading, setPatientsLoading] = useState(true);
   const user = getCurrentUser();
 
   useEffect(() => {
-    appointmentsAPI.getToday()
+    const loadAppointments = appointmentView === "today"
+      ? appointmentsAPI.getToday
+      : appointmentsAPI.getUpcoming;
+    setApptLoading(true);
+    loadAppointments()
       .then(data => setAppointments(data as any[]))
       .catch(err => console.error("Failed to load appointments:", err))
       .finally(() => setApptLoading(false));
@@ -734,7 +751,7 @@ function DoctorDashboard({ navigate, setCurrentPatient }: { navigate: (view: Vie
       .then(data => setPatients(data as any[]))
       .catch(err => console.error("Failed to load patients:", err))
       .finally(() => setPatientsLoading(false));
-  }, []);
+  }, [appointmentView]);
 
   const handleOpenChart = async (appt: any) => {
     try {
@@ -760,30 +777,45 @@ function DoctorDashboard({ navigate, setCurrentPatient }: { navigate: (view: Vie
         <PageHeader
           eyebrow={new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
           title={"Good morning, " + (user?.full_name || "Doctor")}
-          description={"You have " + appointments.length + " appointments today."}
+          description={appointmentView === "today"
+            ? "You have " + appointments.length + " appointments today."
+            : "You have " + appointments.length + " upcoming appointments."}
           actions={<Button variant="secondary" onClick={() => navigate("patient-search")}>Find a patient</Button>}
         />
         <div className="summary-strip">
-          <div><strong>{appointments.length}</strong><span>Appointments today</span></div>
+          <div><strong>{appointments.length}</strong><span>{appointmentView === "today" ? "Appointments today" : "Upcoming appointments"}</span></div>
           <div><strong>{appointments.filter(a => a.status === "scheduled" || a.status === "checked_in").length}</strong><span>Waiting</span></div>
           <div><strong>{appointments.filter(a => a.status === "in_progress").length}</strong><span>In progress</span></div>
           <div><strong>{appointments.filter(a => a.status === "completed").length}</strong><span>Completed</span></div>
         </div>
         <section className="data-section">
           <div className="section-title">
-            <div><h2>Today's patient queue</h2><p>Appointments assigned to you</p></div>
+            <div><h2>{appointmentView === "today" ? "Today's patient queue" : "Upcoming appointments"}</h2><p>Appointments assigned to you</p></div>
+            <div className="button-group">
+              <Button variant={appointmentView === "today" ? "primary" : "secondary"} onClick={() => setAppointmentView("today")}>Today</Button>
+              <Button variant={appointmentView === "upcoming" ? "primary" : "secondary"} onClick={() => setAppointmentView("upcoming")}>Upcoming</Button>
+            </div>
           </div>
           <div className="data-table queue-table">
             <div className="data-row data-row--head">
-              <span>Time</span><span>Patient</span><span>Patient ID</span><span>Reason</span><span>Status</span><span />
+              <span>{appointmentView === "today" ? "Time" : "Date and time"}</span><span>Patient</span><span>Patient ID</span><span>Reason</span><span>Status</span><span />
             </div>
             {apptLoading ? (
               <div className="empty-state"><strong>Loading appointments...</strong></div>
             ) : appointments.length === 0 ? (
-              <div className="empty-state"><strong>No appointments today</strong></div>
+              <div className="empty-state"><strong>{appointmentView === "today" ? "No appointments today" : "No upcoming appointments"}</strong></div>
             ) : appointments.map(appt => (
               <button className="data-row" key={appt.id} onClick={() => handleOpenChart(appt)}>
-                <span data-label="Time">{appt.appointment_time ? new Date(appt.appointment_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--"}</span>
+                <span data-label={appointmentView === "today" ? "Time" : "Date and time"}>
+                  {appt.appointment_time ? (
+                    appointmentView === "today"
+                      ? new Date(appt.appointment_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                      : <>
+                          <strong>{new Date(appt.appointment_time).toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" })}</strong>
+                          <small>{new Date(appt.appointment_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>
+                        </>
+                  ) : "--"}
+                </span>
                 <span data-label="Patient"><strong>{appt.patient_name}</strong></span>
                 <span data-label="Patient ID" className="mono">{appt.patient_id}</span>
                 <span data-label="Reason">{appt.reason || "--"}</span>
@@ -932,6 +964,9 @@ function PatientChart({ navigate, currentPatient, role = "Doctor" }: { navigate:
   const [filterType, setFilterType] = useState<string>("all");
   const [displayLimit, setDisplayLimit] = useState<number>(3);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [checkup, setCheckup] = useState({ bloodPressure: "", heartRate: "", oxygen: "", notes: "" });
+  const [savingCheckup, setSavingCheckup] = useState(false);
+  const [checkupError, setCheckupError] = useState("");
 
   useEffect(() => {
     if (!currentPatient) return;
@@ -957,6 +992,7 @@ function PatientChart({ navigate, currentPatient, role = "Doctor" }: { navigate:
   }, [timeline, filterType]);
 
   const visibleTimeline = filteredTimeline.slice(0, displayLimit);
+  const latestVitals = getCheckupVitals(timeline.find(record => record.type === "doctor_note" && record.title === "Appointment checkup"));
   const remainingCount = Math.max(0, filteredTimeline.length - visibleTimeline.length);
   const hasMore = remainingCount > 0;
 
@@ -966,6 +1002,32 @@ function PatientChart({ navigate, currentPatient, role = "Doctor" }: { navigate:
       setDisplayLimit(prev => prev + 3);
       setLoadingMore(false);
     }, 200);
+  };
+
+  const saveCheckup = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setSavingCheckup(true);
+    setCheckupError("");
+    try {
+      const body = [
+        `Blood pressure: ${checkup.bloodPressure || "Not recorded"}`,
+        `Heart rate: ${checkup.heartRate || "Not recorded"}`,
+        `O2 saturation: ${checkup.oxygen || "Not recorded"}`,
+        `Checkup notes: ${checkup.notes || "No additional notes"}`
+      ].join("\n");
+      const saved = await patientsAPI.createTimelineEntry(currentPatient.id, {
+        patient_id: currentPatient.id,
+        title: "Appointment checkup",
+        body,
+        type: "doctor_note"
+      });
+      setTimeline(records => [saved, ...records]);
+      setCheckup({ bloodPressure: "", heartRate: "", oxygen: "", notes: "" });
+    } catch (err: any) {
+      setCheckupError(err.message || "Failed to save checkup");
+    } finally {
+      setSavingCheckup(false);
+    }
   };
 
   if (!currentPatient) {
@@ -991,7 +1053,6 @@ function PatientChart({ navigate, currentPatient, role = "Doctor" }: { navigate:
           actions={role === "Doctor" ? (
             <>
               <Button variant="secondary" onClick={() => navigate("compare")}>Compare reports</Button>
-              <Button variant="secondary" onClick={() => navigate("add-info")}>Re-run analysis</Button>
               <Button onClick={() => navigate("add-info")}>Add clinical info</Button>
             </>
           ) : <Status tone="neutral">Read-only access</Status>}
@@ -1002,6 +1063,23 @@ function PatientChart({ navigate, currentPatient, role = "Doctor" }: { navigate:
             <span>{currentPatient.allergies}</span>
             <span>Verified {currentPatient.last_visit}</span>
           </div>
+        )}
+        {role === "Doctor" && (
+          <section className="data-section">
+            <div className="section-title">
+              <div><h2>Appointment checkup</h2><p>Record today&apos;s clinical overview and notes. The timestamp is saved automatically.</p></div>
+            </div>
+            {checkupError && <div className="form-error" role="alert"><strong>{checkupError}</strong></div>}
+            <form className="clinical-form" onSubmit={saveCheckup}>
+              <div className="form-grid">
+                <label className="field"><span className="field__label">Blood pressure</span><input placeholder="120/80" value={checkup.bloodPressure} onChange={event => setCheckup(value => ({ ...value, bloodPressure: event.target.value }))} /></label>
+                <label className="field"><span className="field__label">Heart rate</span><input placeholder="72 bpm" value={checkup.heartRate} onChange={event => setCheckup(value => ({ ...value, heartRate: event.target.value }))} /></label>
+                <label className="field"><span className="field__label">O₂ saturation</span><input placeholder="98%" value={checkup.oxygen} onChange={event => setCheckup(value => ({ ...value, oxygen: event.target.value }))} /></label>
+              </div>
+              <label className="field"><span className="field__label">Other checkup notes</span><textarea rows={3} placeholder="Findings, assessment, and plan" value={checkup.notes} onChange={event => setCheckup(value => ({ ...value, notes: event.target.value }))} /></label>
+              <div className="form-actions"><span>Saved checkups appear in Previous records.</span><Button type="submit" disabled={savingCheckup}>{savingCheckup ? "Saving..." : "Save checkup"}</Button></div>
+            </form>
+          </section>
         )}
         <div className="chart-layout">
           <div className="chart-summary">
@@ -1017,9 +1095,9 @@ function PatientChart({ navigate, currentPatient, role = "Doctor" }: { navigate:
             <section>
               <h2>Clinical overview</h2>
               <dl className="metric-list">
-                <div><dt>Blood pressure</dt><dd>-- <small>mmHg</small></dd></div>
-                <div><dt>Heart rate</dt><dd>-- <small>bpm</small></dd></div>
-                <div><dt>O₂ saturation</dt><dd>--<small>%</small></dd></div>
+                <div><dt>Blood pressure</dt><dd>{latestVitals.bloodPressure || "--"} <small>mmHg</small></dd></div>
+                <div><dt>Heart rate</dt><dd>{latestVitals.heartRate || "--"} <small>bpm</small></dd></div>
+                <div><dt>O₂ saturation</dt><dd>{latestVitals.oxygen || "--"}<small>%</small></dd></div>
               </dl>
             </section>
           </div>
@@ -1150,6 +1228,21 @@ function AddInfo({
         test_results: testResults,
         clinical_notes: [impression, notes, allergies ? `New allergy: ${allergies}` : "", `Tests to perform: ${testsToPerform}`].filter(Boolean).join(" | "),
       };
+      const visitBody = [
+        `New symptoms: ${symptoms || "Not recorded"}`,
+        `Observations: ${observations || "Not recorded"}`,
+        `Clinical impression: ${impression || "Not recorded"}`,
+        `Test results: ${testResults || "Not recorded"}`,
+        `New allergies: ${allergies || "None reported"}`,
+        `Tests to perform: ${testsToPerform || "None recorded"}`,
+        `Additional notes: ${notes || "None recorded"}`
+      ].join("\n");
+      await patientsAPI.createTimelineEntry(patient.id, {
+        patient_id: patient.id,
+        title: "Clinical information added",
+        body: visitBody,
+        type: "clinical_note"
+      });
       const res = await analysesAPI.request(payload);
       setCurrentAnalysis(res);
       navigate("processing");
@@ -1896,6 +1989,11 @@ function Confirmation({
 function AssistantDashboard({ navigate, setCurrentPatient }: { navigate: (view: View) => void; setCurrentPatient: (p: any) => void }) {
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState(true);
+  const [editingAppointment, setEditingAppointment] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState({ date: "", time: "", reason: "" });
+  const [appointmentError, setAppointmentError] = useState("");
   const user = getCurrentUser();
 
   useEffect(() => {
@@ -1903,7 +2001,45 @@ function AssistantDashboard({ navigate, setCurrentPatient }: { navigate: (view: 
       .then(data => setPatients(data as any[]))
       .catch(err => console.error("Failed to load patients:", err))
       .finally(() => setLoading(false));
+    appointmentsAPI.getAll()
+      .then(data => setAppointments(data as any[]))
+      .catch(err => setAppointmentError(err.message || "Failed to load appointments"))
+      .finally(() => setAppointmentsLoading(false));
   }, []);
+
+  const beginReschedule = (appointment: any) => {
+    const appointmentDateTime = String(appointment.appointment_time || "");
+    setEditingAppointment(appointment.id);
+    setEditForm({
+      date: appointmentDateTime.slice(0, 10),
+      time: appointmentDateTime.slice(11, 16),
+      reason: appointment.reason || ""
+    });
+    setAppointmentError("");
+  };
+
+  const saveReschedule = async (appointmentId: number) => {
+    try {
+      await appointmentsAPI.update(appointmentId, {
+        appointment_time: `${editForm.date}T${editForm.time}:00`,
+        reason: editForm.reason
+      });
+      setAppointments(await appointmentsAPI.getAll());
+      setEditingAppointment(null);
+    } catch (err: any) {
+      setAppointmentError(err.message || "Failed to reschedule appointment");
+    }
+  };
+
+  const deleteAppointment = async (appointmentId: number) => {
+    if (!window.confirm("Delete this appointment permanently?")) return;
+    try {
+      await appointmentsAPI.delete(appointmentId);
+      setAppointments(current => current.filter(appointment => appointment.id !== appointmentId));
+    } catch (err: any) {
+      setAppointmentError(err.message || "Failed to delete appointment");
+    }
+  };
 
   const handlePatientClick = (patient: any) => {
     setCurrentPatient(patient);
@@ -1920,6 +2056,43 @@ function AssistantDashboard({ navigate, setCurrentPatient }: { navigate: (view: 
           <button onClick={() => navigate("uploads")}><strong>Upload patient documents</strong><span>Attach labs, imaging, or external reports by patient ID.</span><em>Add documents →</em></button>
           <button onClick={() => navigate("patient-search")}><strong>Find an existing patient</strong><span>Open a read-only chart to confirm details.</span><em>Search patients →</em></button>
         </div>
+        <section className="data-section">
+          <div className="section-title">
+            <div><h2>Manage appointments</h2><p>Reschedule or delete clinic appointments.</p></div>
+          </div>
+          {appointmentError && <div className="form-error" role="alert"><strong>{appointmentError}</strong></div>}
+          <div className="data-table">
+            <div className="data-row data-row--head"><span>Date and time</span><span>Patient</span><span>Doctor</span><span>Reason</span><span>Status</span><span>Actions</span></div>
+            {appointmentsLoading ? (
+              <div className="empty-state"><strong>Loading appointments...</strong></div>
+            ) : appointments.length === 0 ? (
+              <div className="empty-state"><strong>No appointments found</strong></div>
+            ) : appointments.map(appointment => (
+              editingAppointment === appointment.id ? (
+                <div className="data-row" key={appointment.id}>
+                  <span data-label="Date and time" className="form-grid">
+                    <input type="date" value={editForm.date} onChange={event => setEditForm(form => ({ ...form, date: event.target.value }))} />
+                    <input type="time" value={editForm.time} onChange={event => setEditForm(form => ({ ...form, time: event.target.value }))} />
+                  </span>
+                  <span data-label="Patient"><strong>{appointment.patient_name}</strong></span>
+                  <span data-label="Doctor">{appointment.doctor_id}</span>
+                  <span data-label="Reason"><input value={editForm.reason} onChange={event => setEditForm(form => ({ ...form, reason: event.target.value }))} /></span>
+                  <span data-label="Status"><Status tone="neutral">{appointment.status}</Status></span>
+                  <span className="button-group"><Button onClick={() => saveReschedule(appointment.id)}>Save</Button><Button variant="quiet" onClick={() => setEditingAppointment(null)}>Cancel</Button></span>
+                </div>
+              ) : (
+                <div className="data-row" key={appointment.id}>
+                  <span data-label="Date and time"><strong>{new Date(appointment.appointment_time).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}</strong></span>
+                  <span data-label="Patient">{appointment.patient_name || appointment.patient_id}</span>
+                  <span data-label="Doctor">Doctor #{appointment.doctor_id}</span>
+                  <span data-label="Reason">{appointment.reason || "--"}</span>
+                  <span data-label="Status"><Status tone={appointment.status === "completed" ? "success" : "neutral"}>{appointment.status}</Status></span>
+                  <span className="button-group"><Button variant="secondary" onClick={() => beginReschedule(appointment)}>Reschedule</Button><Button variant="danger" onClick={() => deleteAppointment(appointment.id)}>Delete</Button></span>
+                </div>
+              )
+            ))}
+          </div>
+        </section>
         <section className="data-section">
           <div className="section-title">
             <div><h2>Recent patients</h2><p>{patients.length} patient(s) in the system</p></div>
@@ -2041,6 +2214,8 @@ function Intake({ navigate }: { navigate: (view: View) => void }) {
 }
 
 function Uploads({ navigate }: { navigate: (view: View) => void }) {
+  const [patients, setPatients] = useState<any[]>([]);
+  const [patientsLoading, setPatientsLoading] = useState(true);
   const [patientIdInput, setPatientIdInput] = useState("");
   const [verifiedPatient, setVerifiedPatient] = useState<any>(null);
   const [verifyError, setVerifyError] = useState("");
@@ -2048,6 +2223,34 @@ function Uploads({ navigate }: { navigate: (view: View) => void }) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState("");
+
+  useEffect(() => {
+    patientsAPI.search("")
+      .then(data => setPatients(data as any[]))
+      .catch(err => setVerifyError(err.message || "Unable to load patients."))
+      .finally(() => setPatientsLoading(false));
+  }, []);
+
+  const selectPatient = async (patientId: string) => {
+    setPatientIdInput(patientId);
+    if (!patientId) {
+      setVerifiedPatient(null);
+      setDocuments([]);
+      return;
+    }
+    setVerifyError("");
+    setUploadError("");
+    setUploadSuccess("");
+    try {
+      const patient = await patientsAPI.getById(patientId);
+      setVerifiedPatient(patient);
+      setDocuments(await documentsAPI.getByPatient(patient.id));
+    } catch (err: any) {
+      setVerifyError(err.message || "Patient not found.");
+      setVerifiedPatient(null);
+      setDocuments([]);
+    }
+  };
 
   const handleVerify = async () => {
     setVerifyError("");
@@ -2089,6 +2292,22 @@ function Uploads({ navigate }: { navigate: (view: View) => void }) {
       <main className="page">
         <PageHeader title="Upload patient documents" description="Attach files to the correct patient record. Files are stored securely with AWS S3 AES-256 encryption." />
         <section className="patient-lookup" aria-label="Patient record lookup">
+          <label className="field">
+            <span className="field__label">Select patient</span>
+            <select
+              value={verifiedPatient?.id || ""}
+              onChange={e => selectPatient(e.target.value)}
+              disabled={patientsLoading}
+            >
+              <option value="">{patientsLoading ? "Loading patients..." : "Choose a patient"}</option>
+              {patients.map(patient => (
+                <option key={patient.id} value={patient.id}>
+                  {patient.full_name} · {patient.id} · {patient.mrn}
+                </option>
+              ))}
+            </select>
+          </label>
+          <span className="field__hint">Choose a patient from the list, or use the manual lookup below.</span>
           <label className="field">
             <span className="field__label">Patient ID or MRN</span>
             <input value={patientIdInput} onChange={e => setPatientIdInput(e.target.value)} placeholder="e.g. CLQ-10482" />
@@ -2296,19 +2515,55 @@ function ScheduleAppointment({ navigate }: { navigate: (view: View) => void }) {
   );
 }
 
-function Compare({ navigate }: { navigate: (view: View) => void }) {
-  const reports = [
-    { date: "18 June 2025", outcome: "Awaiting decision", diagnosis: "Stable angina", confidence: "78%", plan: "Serial troponin, BNP, chest X-ray; review antianginal therapy." },
-    { date: "18 November 2024", outcome: "Approved", diagnosis: "Chronic coronary syndrome", confidence: "71%", plan: "Continue aspirin and statin; complete cardiac rehabilitation." },
-  ];
+function Compare({ navigate, currentPatient, setCurrentAnalysis }: { navigate: (view: View) => void; currentPatient: any; setCurrentAnalysis: (analysis: any) => void }) {
+  const [analyses, setAnalyses] = useState<any[]>([]);
+  const [newerId, setNewerId] = useState<number | "">("");
+  const [earlierId, setEarlierId] = useState<number | "">("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!currentPatient?.id) return;
+    analysesAPI.getByPatient(currentPatient.id)
+      .then(data => {
+        const records = (data as any[]).sort((a, b) => new Date(b.generated_at).getTime() - new Date(a.generated_at).getTime());
+        setAnalyses(records);
+        setNewerId(records[0]?.id ?? "");
+        setEarlierId(records[1]?.id ?? "");
+      })
+      .catch(err => setError(err.message || "Failed to load reports"))
+      .finally(() => setLoading(false));
+  }, [currentPatient?.id]);
+
+  const newer = analyses.find(report => report.id === newerId);
+  const earlier = analyses.find(report => report.id === earlierId);
+  const reportDate = (report: any) => report?.generated_at
+    ? new Date(report.generated_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })
+    : "Date unavailable";
+  const diagnosis = (report: any) => report?.diagnoses?.[0];
+  const reportPlan = (report: any) => report?.recommendations?.map((item: any) => item.title || item.description).join("; ") || "No recommendation recorded.";
+
   return (
     <ClinicalShell view="patient-chart" navigate={navigate} patientOpen>
       <main className="page">
-        <PageHeader eyebrow="Patient chart" title="Compare previous reports" description="Review how clinical evidence, confidence, and recorded decisions changed over time." actions={<Button variant="secondary" onClick={() => navigate("patient-chart")}>Return to chart</Button>} />
-        <div className="compare-toolbar"><span>Comparing 2 reports</span><SelectField label="Newer report"><option>18 June 2025</option></SelectField><SelectField label="Earlier report"><option>18 November 2024</option></SelectField></div>
-        <div className="comparison">
-          {reports.map((report, index) => <section key={report.date}><div className="comparison__header"><span>{index === 0 ? "Current report" : "Previous report"}</span><h2>{report.date}</h2><Status tone={index === 0 ? "caution" : "success"}>{report.outcome}</Status></div><dl><div><dt>Leading diagnosis</dt><dd><strong>{report.diagnosis}</strong><span>{report.confidence} confidence</span></dd></div><div><dt>Recommended plan</dt><dd>{report.plan}</dd></div><div><dt>Patient factors</dt><dd>Coronary artery disease · Hypertension · Hyperlipidemia</dd></div><div><dt>Clinician outcome</dt><dd>{index === 0 ? "Not yet recorded" : "Approved by Dr. Maya Patel with no modifications"}</dd></div></dl><Button variant="quiet" onClick={() => navigate(index === 0 ? "report" : "print-report")}>Open full report</Button></section>)}
-        </div>
+        <PageHeader eyebrow="Patient chart" title="Compare previous reports" description="Compare this patient's saved clinical analyses over time." actions={<Button variant="secondary" onClick={() => navigate("patient-chart")}>Return to chart</Button>} />
+        {loading ? <div className="empty-state"><strong>Loading saved reports...</strong></div> : error ? <div className="form-error" role="alert"><strong>{error}</strong></div> : analyses.length < 2 ? (
+          <div className="empty-state"><strong>At least two saved reports are required</strong><p>Complete two clinical analyses for this patient before comparing reports.</p></div>
+        ) : (
+          <>
+            <div className="compare-toolbar">
+              <span>Comparing 2 of {analyses.length} reports</span>
+              <label className="field"><span className="field__label">Newer report</span><select value={newerId} onChange={event => setNewerId(Number(event.target.value))}>{analyses.map(report => <option key={report.id} value={report.id}>{reportDate(report)} · {report.report_id}</option>)}</select></label>
+              <label className="field"><span className="field__label">Earlier report</span><select value={earlierId} onChange={event => setEarlierId(Number(event.target.value))}>{analyses.filter(report => report.id !== newerId).map(report => <option key={report.id} value={report.id}>{reportDate(report)} · {report.report_id}</option>)}</select></label>
+            </div>
+            <div className="comparison">
+              {[newer, earlier].map((report, index) => {
+                const topDiagnosis = diagnosis(report);
+                return <section key={report.id}><div className="comparison__header"><span>{index === 0 ? "Newer report" : "Earlier report"}</span><h2>{reportDate(report)}</h2><Status tone={report.status === "approved" ? "success" : "caution"}>{report.status}</Status></div><dl><div><dt>Leading diagnosis</dt><dd><strong>{topDiagnosis?.name || "Not recorded"}</strong><span>{topDiagnosis?.confidence_percentage ? `${topDiagnosis.confidence_percentage}% confidence` : "Confidence unavailable"}</span></dd></div><div><dt>Recommended plan</dt><dd>{reportPlan(report)}</dd></div><div><dt>Patient factors</dt><dd>{report.risk_factors?.join(" · ") || "No risk factors recorded"}</dd></div><div><dt>Report ID</dt><dd>{report.report_id}</dd></div></dl><Button variant="quiet" onClick={() => { setCurrentAnalysis(report); navigate("report"); }}>Open full report</Button></section>;
+              })}
+            </div>
+          </>
+        )}
       </main>
     </ClinicalShell>
   );
@@ -2546,7 +2801,7 @@ export default function App() {
   if (view === "intake") return <Intake navigate={navigate} />;
   if (view === "uploads") return <Uploads navigate={navigate} />;
   if (view === "schedule-appointment") return <ScheduleAppointment navigate={navigate} />;
-  if (view === "compare") return <Compare navigate={navigate} currentPatient={currentPatient} />;
+  if (view === "compare") return <Compare navigate={navigate} currentPatient={currentPatient} setCurrentAnalysis={setCurrentAnalysis} />;
   if (view === "print-report") return <Report print navigate={navigate} currentPatient={currentPatient} currentAnalysis={currentAnalysis} setLastDecision={setLastDecision} />;
   return <AdminPage view={view} navigate={navigate} />;
 }

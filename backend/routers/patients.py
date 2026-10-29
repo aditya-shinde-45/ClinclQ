@@ -3,7 +3,7 @@ from supabase import Client
 from typing import List, Optional
 from models.schemas import (
     PatientCreate, PatientUpdate, PatientResponse, PatientDetailResponse,
-    VisitResponse, AppointmentWithPatient
+    VisitCreate, VisitResponse, AppointmentWithPatient
 )
 from core.security import get_current_user, require_role
 from core.database import get_db
@@ -202,6 +202,39 @@ async def get_patient_timeline(
     ).order("visit_date", desc=True).execute()
     
     return [VisitResponse(**visit) for visit in response.data]
+
+
+@router.post("/{patient_id}/timeline", response_model=VisitResponse, status_code=status.HTTP_201_CREATED)
+async def create_patient_timeline_entry(
+    patient_id: str,
+    visit: VisitCreate,
+    current_user: dict = Depends(require_role("doctor")),
+    db: Client = Depends(get_db)
+):
+    """Record a doctor's appointment checkup in the patient history."""
+    if visit.patient_id != patient_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Patient ID in the request does not match the URL"
+        )
+
+    patient = db.table("patients").select("id").eq("id", patient_id).execute()
+    if not patient.data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found"
+        )
+
+    visit_data = visit.model_dump(mode="json")
+    visit_data["created_by_id"] = current_user["id"]
+    response = db.table("visits").insert(visit_data).execute()
+    if not response.data:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to save checkup record"
+        )
+
+    return VisitResponse(**response.data[0])
 
 
 @router.get("/{patient_id}/appointments", response_model=List[AppointmentWithPatient])

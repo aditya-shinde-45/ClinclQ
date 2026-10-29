@@ -11,23 +11,19 @@ from core.database import get_db
 router = APIRouter(prefix="/appointments", tags=["Appointments"])
 
 
-@router.get("/today", response_model=List[AppointmentWithPatient])
-async def get_todays_appointments(
+async def list_appointments(
     current_user: dict = Depends(get_current_user),
-    db: Client = Depends(get_db)
+    db: Client = Depends(get_db),
+    start: datetime | None = None,
+    end: datetime | None = None,
 ):
-    """Get today's appointments for the current doctor"""
-    
-    # Get start and end of today
-    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    today_end = today_start + timedelta(days=1)
-    
-    # If doctor, filter by their ID
     query = db.table("appointments").select(
         "*, patient:patients!patient_id(full_name)"
-    ).gte("appointment_time", today_start.isoformat()).lt(
-        "appointment_time", today_end.isoformat()
     )
+    if start:
+        query = query.gte("appointment_time", start.isoformat())
+    if end:
+        query = query.lt("appointment_time", end.isoformat())
     
     if current_user["role"] == "doctor":
         query = query.eq("doctor_id", current_user["id"])
@@ -45,6 +41,35 @@ async def get_todays_appointments(
     return appointments
 
 
+@router.get("/today", response_model=List[AppointmentWithPatient])
+async def get_todays_appointments(
+    current_user: dict = Depends(get_current_user),
+    db: Client = Depends(get_db)
+):
+    """Get appointments scheduled for today."""
+    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    return await list_appointments(current_user, db, today_start, today_start + timedelta(days=1))
+
+
+@router.get("/upcoming", response_model=List[AppointmentWithPatient])
+async def get_upcoming_appointments(
+    current_user: dict = Depends(get_current_user),
+    db: Client = Depends(get_db)
+):
+    """Get appointments scheduled from tomorrow onward."""
+    tomorrow = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    return await list_appointments(current_user, db, tomorrow)
+
+
+@router.get("/all", response_model=List[AppointmentWithPatient])
+async def get_all_appointments(
+    current_user: dict = Depends(require_role("assistant", "doctor")),
+    db: Client = Depends(get_db)
+):
+    """Get all appointments for appointment management."""
+    return await list_appointments(current_user, db)
+
+
 @router.post("", response_model=AppointmentResponse, status_code=status.HTTP_201_CREATED)
 async def create_appointment(
     appointment: AppointmentCreate,
@@ -53,7 +78,7 @@ async def create_appointment(
 ):
     """Create a new appointment"""
     
-    appointment_data = appointment.model_dump()
+    appointment_data = appointment.model_dump(mode="json")
     
     response = db.table("appointments").insert(appointment_data).execute()
     
@@ -75,7 +100,7 @@ async def update_appointment(
 ):
     """Update appointment details or status"""
     
-    update_data = appointment_update.model_dump(exclude_unset=True)
+    update_data = appointment_update.model_dump(mode="json", exclude_unset=True)
     
     if not update_data:
         raise HTTPException(
@@ -95,21 +120,20 @@ async def update_appointment(
 
 
 @router.delete("/{appointment_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def cancel_appointment(
+async def delete_appointment(
     appointment_id: int,
-    current_user: dict = Depends(require_role("doctor", "assistant")),
+    current_user: dict = Depends(require_role("assistant")),
     db: Client = Depends(get_db)
 ):
-    """Cancel an appointment"""
+    """Permanently delete an appointment. Only clinic assistants may delete."""
     
-    response = db.table("appointments").update(
-        {"status": "cancelled"}
-    ).eq("id", appointment_id).execute()
-    
-    if not response.data:
+    existing = db.table("appointments").select("id").eq("id", appointment_id).execute()
+    if not existing.data:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Appointment not found"
         )
-    
+
+    db.table("appointments").delete().eq("id", appointment_id).execute()
+
     return None

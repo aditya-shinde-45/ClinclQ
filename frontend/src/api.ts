@@ -77,6 +77,18 @@ export const patientsAPI = {
     return handleResponse<any[]>(response);
   },
 
+  createTimelineEntry: async (patientId: string, data: any): Promise<any> => {
+    const response = await fetch(`${API_BASE_URL}/patients/${patientId}/timeline`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify(data)
+    });
+    return handleResponse<any>(response);
+  },
+
   getDoctors: async (): Promise<any[]> => {
     const response = await fetch(`${API_BASE_URL}/patients/doctors`, {
       headers: getAuthHeaders()
@@ -89,6 +101,20 @@ export const patientsAPI = {
 export const appointmentsAPI = {
   getToday: async (): Promise<any[]> => {
     const response = await fetch(`${API_BASE_URL}/appointments/today`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse<any[]>(response);
+  },
+
+  getUpcoming: async (): Promise<any[]> => {
+    const response = await fetch(`${API_BASE_URL}/appointments/upcoming`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse<any[]>(response);
+  },
+
+  getAll: async (): Promise<any[]> => {
+    const response = await fetch(`${API_BASE_URL}/appointments/all`, {
       headers: getAuthHeaders()
     });
     return handleResponse<any[]>(response);
@@ -116,6 +142,26 @@ export const appointmentsAPI = {
       body: JSON.stringify({ status })
     });
     return handleResponse(response);
+  },
+
+  update: async (appointmentId: number, data: { appointment_time: string; reason?: string }) => {
+    const response = await fetch(`${API_BASE_URL}/appointments/${appointmentId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response);
+  },
+
+  delete: async (appointmentId: number) => {
+    const response = await fetch(`${API_BASE_URL}/appointments/${appointmentId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
   }
 };
 
@@ -141,10 +187,22 @@ export const analysesAPI = {
   },
   
   getByPatient: async (patientId: string) => {
-    const response = await fetch(`${API_BASE_URL}/analyses/patient/${patientId}`, {
-      headers: getAuthHeaders()
-    });
-    return handleResponse(response);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 15000);
+    try {
+      const response = await fetch(`${API_BASE_URL}/analyses/patient/${patientId}`, {
+        headers: getAuthHeaders(),
+        signal: controller.signal
+      });
+      return handleResponse(response);
+    } catch (error: any) {
+      if (error?.name === "AbortError") {
+        throw new Error("Loading saved reports timed out. Please try again.");
+      }
+      throw error;
+    } finally {
+      window.clearTimeout(timeout);
+    }
   },
   
   recordDecision: async (analysisId: number, decision: any) => {

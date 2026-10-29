@@ -490,12 +490,63 @@ async def get_patient_analyses(
         "patient_id", patient_id
     ).order("generated_at", desc=True).execute()
     
+    analysis_rows = analyses_response.data
+    diagnoses = db.table("diagnoses").select("*").execute().data or []
+    recommendations = db.table("recommendations").select("*").execute().data or []
+    interactions = db.table("drug_interactions").select("*").execute().data or []
+    analysis_risk_factors = db.table("analysis_risk_factors").select(
+        "*, risk_factor:risk_factors!risk_factor_id(name)"
+    ).execute().data or []
+
     results = []
-    for analysis in analyses_response.data:
-        # Get full analysis with related data
-        full_analysis = await get_analysis(analysis["id"], current_user, db)
-        results.append(full_analysis)
-    
+    for analysis in analysis_rows:
+        analysis_id = analysis["id"]
+        raw_evidence = analysis.get("retrieved_evidence") or []
+        retrieved_evidence = []
+        for item in raw_evidence:
+            try:
+                retrieved_evidence.append(
+                    RetrievedEvidenceItem(**item) if isinstance(item, dict) else item
+                )
+            except Exception:
+                pass
+
+        analysis_diagnoses = [
+            DiagnosisResponse(**row)
+            for row in diagnoses
+            if row.get("analysis_id") == analysis_id
+        ]
+        analysis_recommendations = [
+            RecommendationResponse(**row)
+            for row in recommendations
+            if row.get("analysis_id") == analysis_id
+        ]
+        analysis_interactions = [
+            DrugInteractionResponse(**row)
+            for row in interactions
+            if row.get("analysis_id") == analysis_id
+        ]
+        analysis_risks = [
+            row["risk_factor"]["name"]
+            for row in analysis_risk_factors
+            if row.get("analysis_id") == analysis_id and row.get("risk_factor")
+        ]
+
+        results.append(AnalysisResponse(
+            id=analysis_id,
+            patient_id=analysis["patient_id"],
+            report_id=analysis["report_id"],
+            status=analysis["status"],
+            diagnoses=analysis_diagnoses,
+            recommendations=analysis_recommendations,
+            drug_interactions=analysis_interactions,
+            risk_factors=analysis_risks,
+            patient_explanation=analysis.get("patient_explanation"),
+            retrieved_evidence=retrieved_evidence,
+            generated_at=analysis["generated_at"],
+            reviewed_at=analysis.get("reviewed_at")
+        ))
+
     return results
 
 
